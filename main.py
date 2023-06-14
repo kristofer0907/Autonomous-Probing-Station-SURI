@@ -45,8 +45,8 @@ def read_current(analog_input_channel,sample_amount,sample_rate):
     
         
 
-def plotter(I_data,V_data):
-    plt.plot(V_data,I_data)
+def plotter(x,y):
+    plt.plot(x,y)
     plt.show()
 
 
