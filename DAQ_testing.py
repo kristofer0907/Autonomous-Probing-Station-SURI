@@ -63,7 +63,7 @@ class DAQ:
 
     def storage(self,level,incoming_data):
         '''Keep the data acquired in a dict'''
-        file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+        file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\" #TODO: Change this so its accessible for everyone
         file_location = file_path+self.file_name
         data = {level:incoming_data}
         if os.path.exists(file_location):
@@ -101,7 +101,7 @@ SAMPLE_AMOUNT = 10
 SAMPLE_RATE = 1000
 main = DAQ(analog_input_channel,analog_output_channel)
 main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name)
-voltage_levels = main.create_interval(-0.5,0.5,0.1)
+voltage_levels = main.create_interval(-0.5,0.5,0.1) # TODO: Make interval muteable for user
 iteratives = 2 ### How many times the user wants to execute each single voltage characteristic
 x = 0 ## check holder
 while x <= iteratives:

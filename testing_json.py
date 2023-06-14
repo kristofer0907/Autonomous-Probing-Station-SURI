@@ -1,7 +1,7 @@
 import json
 voltage_level =0.5
 test_list = list()
-for i in range(-10,10,1):
+for i in range(-10,10,2):
     test_list.append(i)
 
 data = {voltage_level:test_list}
