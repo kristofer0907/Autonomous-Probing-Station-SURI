@@ -65,25 +65,33 @@ class DAQ:
         '''Keep the data acquired in a dict'''
         file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\" #TODO: Change this so its accessible for everyone
         file_location = file_path+self.file_name
-        data = {level:incoming_data}
-        if os.path.exists(file_location):
-    # Open the file in append mode
-            with open(file_location, 'r') as json_file:
-                # Load the existing JSON data
-                existing_data = json.load(json_file)
+        data = {level:incoming_data} # Write the data into the form we want to keep it
+    
+        if os.path.isfile(file_location) is False:
+            raise Exception("File not found")
 
-                # Update the existing data with new data
-            existing_data.update(data)
+        # else:
+        #     # Create a new file and write the data
+        #     with open(file_location, 'w') as json_file:
+        #         json.dump(data, json_file, indent=4)
+        # Read json file
+        with open(file_location) as fp:
+            listObj = json.load(fp)
+
+
+        print(listObj)
+        print(type(listObj))
+
+        listObj.update(data)
+
+        print(listObj)
+
+        with open(file_location,"w") as json_file:
+            json.dump(listObj, json_file,
+                    indent = 4,
+                    separators = (",",": "))
+    
         
-            with open(file_location,"w") as json_file:
-                json.dump(existing_data,json_file,indent=4)
-
-                # Write the updated data back to the file
-                json.dump(existing_data, json_file, indent=4)
-        else:
-            # Create a new file and write the data
-            with open(file_location, 'w') as json_file:
-                json.dump(data, json_file, indent=4)
 
     def plotter(self,x,y):
         plt.plot(x,y)
