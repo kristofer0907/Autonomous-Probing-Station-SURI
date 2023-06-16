@@ -26,6 +26,32 @@ class DAQ:
             num += step
         return interval_list
 
+    def setup(self,interval,steps):
+                
+        file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+        voltage_min = min(interval)
+        start_voltage = round(voltage_min,1)
+        voltage_max = max(interval)
+        iterations = 3
+        
+        ############SETUP############
+        actual_file = file_path+self.file_name
+        self.actual_file = actual_file
+
+        data = {}
+        while start_voltage <=voltage_max:
+            data[round(start_voltage,1)] = {}
+            x = 1
+            while x <= iterations:
+                data[round(start_voltage,1)][x] = ""
+
+                x += 1
+
+            start_voltage = round(start_voltage + steps,1)
+
+
+        with open(actual_file,'w') as json_file:
+            json.dump(data,json_file,indent = 4)
 
     def set_analog_output(self,analog_input_channel,voltage_level,num_samples):
         with nidaqmx.Task() as task:
@@ -61,35 +87,28 @@ class DAQ:
     #         return data, elapsed_time
 
 
-    def storage(self,level,incoming_data):
+    def storing(self,collected_data,interval,iterations):
         '''Keep the data acquired in a dict'''
-        file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\" #TODO: Change this so its accessible for everyone
-        file_location = file_path+self.file_name
-        data = {level:incoming_data} # Write the data into the form we want to keep it
-    
-        if os.path.isfile(file_location) is False:
-            raise Exception("File not found")
-
-        # else:
-        #     # Create a new file and write the data
-        #     with open(file_location, 'w') as json_file:
-        #         json.dump(data, json_file, indent=4)
-        # Read json file
-        with open(file_location) as fp:
-            listObj = json.load(fp)
+        voltage_min = min(interval)
+        voltage_max =max(interval)
+        
+        with open(self.actual_file,'r') as json_file:
+            data = json.load(json_file)
 
 
-        print(listObj)
-        print(type(listObj))
+        start_voltage = voltage_min
+        while start_voltage <=voltage_max:
+            x = 1
+            while x <= iterations:
+                data[str(round(start_voltage,1))][str(x)] = collected_data
 
-        listObj.update(data)
+                x += 1
 
-        print(listObj)
+            start_voltage = round(start_voltage + steps,1)
 
-        with open(file_location,"w") as json_file:
-            json.dump(listObj, json_file,
-                    indent = 4,
-                    separators = (",",": "))
+        with open(self.actual_file,'w') as json_file:
+            json.dump(data,json_file,indent =4 )
+
     
         
 
@@ -99,7 +118,7 @@ class DAQ:
 
 
 
-############## MAIN ############## 
+############## INPUTS ############## 
 file_name = "test2" # User should select the filename, said filename will be used in the future for 
                 #selecting data from which files
 start_time = time.time()
@@ -107,18 +126,49 @@ analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel n
 analog_output_channel = "cDAQ1Mod1/ao0"
 SAMPLE_AMOUNT = 10
 SAMPLE_RATE = 1000
+VOLTAGE_MIN = -0.5
+VOLTAGE_MAX = 0.5
+STEPS = 0.1
+ITERATIVES = 3
+
+
+############## CALLING MAIN ############## 
+
+
 main = DAQ(analog_input_channel,analog_output_channel)
 main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name)
-voltage_levels = main.create_interval(-0.5,0.5,0.1) # TODO: Make interval muteable for user
-iteratives = 2 ### How many times the user wants to execute each single voltage characteristic
+voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
+main.setup(voltage_levels,STEPS)
+ ### How many times the user wants to execute each single voltage characteristic
 x = 0 ## check holder
-while x <= iteratives:
+while x <= ITERATIVES:
     for voltage_level in voltage_levels:
         main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
         current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        main.storage(voltage_level,current_reading)
+        main.storing()
         
         x += 1
 end_time = time.time()-start_time
 print(end_time)
+
+
+
+
+
+
+# Get user to state how many iterations, the voltage interval, the step in between, and the filename
+
+
+# ----------------- >>>>>>>>>>>
+# ----------------- >>>>>>>>>>>>>>
+# ----------------- >>>>>>>>>>>
+
+# Create a json file with the amount of iterations and the voltage interval
+
+# ----------------- >>>>>>>>>>>
+# ----------------- >>>>>>>>>>>>>>
+# ----------------- >>>>>>>>>>>
+
+# Take measurements for each iteration, store them in the json file 
+
 
