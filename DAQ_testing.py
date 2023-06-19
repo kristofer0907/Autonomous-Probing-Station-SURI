@@ -27,11 +27,13 @@ class DAQ:
         return interval_list
 
     def setup(self,interval,steps):
-                
+        self.steps = steps        
         file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         voltage_min = min(interval)
         start_voltage = round(voltage_min,1)
+        self.start_voltage = start_voltage
         voltage_max = max(interval)
+        self.start_voltage_max = voltage_max
         iterations = 3
         
         ############SETUP############
@@ -87,24 +89,21 @@ class DAQ:
     #         return data, elapsed_time
 
 
-    def storing(self,collected_data,interval,iterations):
+    def storing(self,collected_data,iterations):
         '''Keep the data acquired in a dict'''
-        voltage_min = min(interval)
-        voltage_max =max(interval)
+        
         
         with open(self.actual_file,'r') as json_file:
             data = json.load(json_file)
 
-
-        start_voltage = voltage_min
-        while start_voltage <=voltage_max:
+        while self.start_voltage <=self.start_voltage_max:
             x = 1
             while x <= iterations:
-                data[str(round(start_voltage,1))][str(x)] = collected_data
+                data[str(round(self.start_voltage,1))][str(x)] = collected_data
 
                 x += 1
 
-            start_voltage = round(start_voltage + steps,1)
+            self.start_voltage = round(self.start_voltage + self.steps,1)
 
         with open(self.actual_file,'w') as json_file:
             json.dump(data,json_file,indent =4 )
@@ -119,7 +118,7 @@ class DAQ:
 
 
 ############## INPUTS ############## 
-file_name = "test2" # User should select the filename, said filename will be used in the future for 
+file_name = "test3.json" # User should select the filename, said filename will be used in the future for 
                 #selecting data from which files
 start_time = time.time()
 analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
@@ -144,8 +143,9 @@ x = 0 ## check holder
 while x <= ITERATIVES:
     for voltage_level in voltage_levels:
         main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
+        start_time = time.time()
         current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        main.storing()
+        main.storing(current_reading,ITERATIVES)
         
         x += 1
 end_time = time.time()-start_time

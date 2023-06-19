@@ -54,9 +54,6 @@ while start_voltage <=voltage_max:
 
     start_voltage = round(start_voltage + steps,1)
 
-
-print(data)
-
 with open(actual_file,'w') as json_file:
     json.dump(data,json_file,indent =4 )
 
