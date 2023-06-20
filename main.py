@@ -3,7 +3,7 @@ import nidaqmx
 import time
 import matplotlib.pyplot as plt
 import math
-
+import statistics
 def set_analog_output(analog_input_channel,voltage_level,num_samples):
     with nidaqmx.Task() as task:
         task.ao_channels.add_ao_voltage_chan(analog_input_channel)
@@ -58,23 +58,31 @@ def plotter(x,y):
 # print(f"Average voltage reading: {voltage_reading} V")
 
 start_time = time.time()
-VOLTAGE_LEVEL = 0.005
+listi = [-0.05,-0.04,-0.03,-0.02,-0.01,0,0.01,0.02,0.03,0.04,0.05]
+VOLTAGE_LEVEL = -0.03
 analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
 analog_output_channel = "cDAQ1Mod1/ao0"
 SAMPLE_AMOUNT = 10
 SAMPLE_RATE = 1000
-set_analog_output(analog_output_channel,VOLTAGE_LEVEL,SAMPLE_AMOUNT)
+for i in listi:
+    set_analog_output(analog_output_channel,i,SAMPLE_AMOUNT)
+    
+    voltage_reading,voltage_time = read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+
+    current_reading,current_time = read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+    # print(f"time of entire process: {time.time()-start_time}") # time the program takes to start
+    # print(f"The voltage{i} is: {voltage_reading}")
+    # print(f"The mean voltage is{statistics.mean(voltage_reading)}")
+    print()
+    print(f"The current is: {current_reading}")
+    print(f"The mean current {i} is{statistics.mean(current_reading)}")
+    #print(f"Voltage reading: {voltage_reading} V")
+    #print(f"Analog input acquisition time: {acquisition_time_voltage} seconds")
+    #print(f"Current reading: {current_reading} A")
+
+
 #time.sleep(1)
-voltage_reading,voltage_time = read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-
-current_reading,current_time = read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-#print(f"Voltage reading: {voltage_reading} V")
-#print(f"Analog input acquisition time: {acquisition_time_voltage} seconds")
-#print(f"Current reading: {current_reading} A")
-
-
-print(f"time of entire process: {time.time()-start_time}") # time the program takes to start
-plotter(current_reading,voltage_reading) #plot voltage vs. current
+#plotter(current_reading,voltage_reading) #plot voltage vs. current
 #plotter(voltage_reading,voltage_time) #plot the time vs. current
 #plotter(current_reading,current_time) #plot the time vs. voltage
 
