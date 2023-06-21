@@ -34,7 +34,7 @@ class DAQ:
         self.start_voltage = start_voltage
         voltage_max = max(interval)
         self.start_voltage_max = voltage_max
-        iterations = 3
+        iterations = 2
         
         ############SETUP############
         actual_file = file_path+self.file_name
@@ -101,19 +101,19 @@ class DAQ:
             return data, time_array
 
 
-    def storing(self,collected_data,iterations):
+    def storing(self,current_voltage,collected_data,iteration):
         '''Keep the data acquired in a dict'''        
         with open(self.actual_file,'r') as json_file:
             data = json.load(json_file)
+        data[str(round(current_voltage,2))][str(iteration)] = collected_data
+        # while self.start_voltage <=self.start_voltage_max:
+        #     x = 1
+        #     while x <= iterations:
+        #         data[str(round(self.start_voltage,2))][str(x)] = collected_data
 
-        while self.start_voltage <=self.start_voltage_max:
-            x = 1
-            while x <= iterations:
-                data[str(round(self.start_voltage,2))][str(x)] = collected_data
+        #         x += 1
 
-                x += 1
-
-            self.start_voltage = round(self.start_voltage + self.steps,2)
+        #     self.start_voltage = round(self.start_voltage + self.steps,2)
 
         with open(self.actual_file,'w') as json_file:
             json.dump(data,json_file,indent =4 )
@@ -152,12 +152,12 @@ main.setup(voltage_levels,STEPS,str)
  ## check holder
 
 for voltage_level in voltage_levels:
-    x = 0
+    x = 1
     while x <= ITERATIVES:    
         main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
         current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
         #voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        main.storing(current_reading,ITERATIVES)
+        main.storing(voltage_level,current_reading,x)
         #main.plotter(current_time,current_reading)
         
         x += 1
