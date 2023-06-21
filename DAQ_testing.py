@@ -18,11 +18,22 @@ class DAQ:
         self.sample_rate = sample_rate
         self.file_name = file_name
 
+    def get_zeros(self,min,max,count=0 ):
+        min = str(min)
+        if min[count]:
+            return self.get_zeros(min,max,count) 
+        else:
+            self.zeros = count
+    
+
+    
+
     def create_interval(self,start, end, step):
         interval_list = []
         num = start
-        while round(num,2) <= end:
-            interval_list.append(round(num,2))
+        self.zeros = start.count(0)
+        while round(num,self.zeros) <= end:
+            interval_list.append(round(num,self.zeros))
             num += step
         return interval_list
 
@@ -51,14 +62,14 @@ class DAQ:
         data = {}
         
         while start_voltage <=voltage_max:
-            data[round(start_voltage,2)] = {}
+            data[round(start_voltage,self.zeros)] = {}
             x = 1
             while x <= iterations:
-                data[round(start_voltage,2)][x] = ""
+                data[round(start_voltage,self.zeros)][x] = ""
 
                 x += 1
 
-            start_voltage = round(start_voltage + steps,2)
+            start_voltage = round(start_voltage + steps,self.zeros)
 
 
         with open(actual_file,'w') as json_file:
@@ -105,7 +116,7 @@ class DAQ:
         '''Keep the data acquired in a dict'''        
         with open(self.actual_file,'r') as json_file:
             data = json.load(json_file)
-        data[str(round(current_voltage,2))][str(iteration)] = collected_data
+        data[str(round(current_voltage,self.zeros))][str(iteration)] = collected_data
         # while self.start_voltage <=self.start_voltage_max:
         #     x = 1
         #     while x <= iterations:
