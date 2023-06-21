@@ -45,7 +45,6 @@ class DAQ:
             num += step
         return interval_list
 
-    import os
 
     def search_file(self,folder_path, file_name):
         for root, dirs, files in os.walk(folder_path):
@@ -65,7 +64,7 @@ class DAQ:
 
 
 
-    def setup(self,interval,steps,string,iterations):
+    def setup(self,interval,steps,variable,iterations):
         self.steps = steps        
         file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         voltage_min = min(interval)
@@ -73,7 +72,7 @@ class DAQ:
         self.start_voltage = start_voltage
         voltage_max = max(interval)
         self.start_voltage_max = voltage_max
-       
+        #variable = str(variable)
         
         ############SETUP############
        
@@ -83,21 +82,15 @@ class DAQ:
         actual_file = file_path+self.file_name
         self.actual_file = actual_file
 
-        ############VOLTAGE############
-        if type(string) == str:
-            pass
+        data = {}
        
 
-         ############CURRENT############ 
-        elif type(string) == int:
-            pass   
-        data = {}
-        
+        data[variable] = {}
         while start_voltage <=voltage_max:
-            data[round(start_voltage,self.zeros)] = {}
+            data[variable][round(start_voltage,self.zeros)] = {}
             x = 1
             while x <= iterations:
-                data[round(start_voltage,self.zeros)][x] = ""
+                data[variable][round(start_voltage,self.zeros)][x] = ""
 
                 x += 1
 
@@ -144,11 +137,12 @@ class DAQ:
             return data, time_array
 
 
-    def storing(self,current_voltage,collected_data,iteration):
+    def storing(self,current_voltage,collected_data,iteration,variable):
         '''Keep the data acquired in a dict'''        
+        variable = str(variable)
         with open(self.actual_file,'r') as json_file:
             data = json.load(json_file)
-        data[str(round(current_voltage,self.zeros))][str(iteration)] = collected_data
+        data[variable][str(round(current_voltage,self.zeros))][str(iteration)] = collected_data
         # while self.start_voltage <=self.start_voltage_max:
         #     x = 1
         #     while x <= iterations:
@@ -161,7 +155,7 @@ class DAQ:
         with open(self.actual_file,'w') as json_file:
             json.dump(data,json_file,indent =4 )
 
-    
+
         
 
     def plotter(self,x,y):
@@ -171,34 +165,35 @@ class DAQ:
 
 
 ############## INPUTS ############## 
-# file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
-# file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
-
-# start_time = time.time()
-# analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
-# analog_output_channel = "cDAQ1Mod1/ao0"
-# SAMPLE_AMOUNT = 10
-# SAMPLE_RATE = 1000
-# VOLTAGE_MIN = -0.005
-# VOLTAGE_MAX = 0.005
-# STEPS = 0.001
-# ITERATIVES = 2
-############## UI ############## 
-print('WELCOME TO THE AUTO-PROBER 2023, please fill out the following: ')
-file_name = input("Filename: ") 
-file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
+file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
 file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 
 start_time = time.time()
-analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
-analog_output_channel = input("Analog output channel: ")
+analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
+analog_output_channel = "cDAQ1Mod1/ao0"
+SAMPLE_AMOUNT = 10
+SAMPLE_RATE = 1000
+VOLTAGE_MIN = -0.005
+VOLTAGE_MAX = 0.005
+STEPS = 0.001
+ITERATIVES = 2
+variable = "Current"
+############## UI ############## 
+# print('WELCOME TO THE AUTO-PROBER 2023, please fill out the following: ')
+# file_name = input("Filename: ") 
+# file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
+# file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 
-SAMPLE_AMOUNT = int(input("Sample amount: "))
-SAMPLE_RATE = int(input("Sample rate [Hz]: "))
-VOLTAGE_MIN = float(input("Voltage minimum: "))
-VOLTAGE_MAX = float(input("Voltage max: "))
-STEPS = float(input("Incremental steps between voltages: "))
-ITERATIVES = int(input("Iteratives: "))
+# start_time = time.time()
+# analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+# analog_output_channel = input("Analog output channel: ")
+
+# SAMPLE_AMOUNT = int(input("Sample amount: "))
+# SAMPLE_RATE = int(input("Sample rate [Hz]: "))
+# VOLTAGE_MIN = float(input("Voltage minimum: "))
+# VOLTAGE_MAX = float(input("Voltage max: "))
+# STEPS = float(input("Incremental steps between voltages: "))
+# ITERATIVES = int(input("Iteratives: "))
 
 
 
@@ -212,19 +207,22 @@ elif logical_check == int: ### Means the file exists already
     print("The file you have asked to write in seems to already exist, please select one of the options below with the numeric keypad:")
     print(" 1. Overwrite pre-existing file")
     print(" 2. Select a new name")
-    new_or_not =input()
+    new_or_not =input(" ")
     if new_or_not == "2":
         new_name_file = input("Please submit a new name for a file: ")
         new_name_file = new_name_file+".json"
         main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
-    else:
+    elif new_or_not =="1":
         pass
-
+    else:
+        print("Please select an available option")
+        #TODO make this into a function or something so that its more 
+        # easily possible to make the user start over again
 
 
 main.count_zeros_in_float(VOLTAGE_MIN)
 voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
-main.setup(voltage_levels,STEPS,str,ITERATIVES)
+main.setup(voltage_levels,STEPS,variable,ITERATIVES)
  ### How many times the user wants to execute each single voltage characteristic
  ## check holder
 
@@ -233,18 +231,16 @@ for voltage_level in voltage_levels:
     while x <= ITERATIVES:    
         main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
         current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        #voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        main.storing(voltage_level,current_reading,x)
+        voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+        main.storing(voltage_level,current_reading,x,variable)
+        # variable = "Voltage"
+        # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
+        # main.storing(voltage_level,voltage_reading,x,variable)
         #main.plotter(current_time,current_reading)
         
         x += 1
 end_time = time.time()-start_time
 print(end_time)
-
-
-
-
-
 
 # Get user to state how many iterations, the voltage interval, the step in between, and the filename
 
