@@ -13,17 +13,26 @@ class DAQ:
         self.analog_input_channel =analog_input_channel
         self.analog_output_channel = analog_output_channel
 
-    def get_user_parameters(self,sample_amount,sample_rate,file_name):
+    def get_user_parameters(self,sample_amount,sample_rate,file_name,file_path):
         self.sample_amount = sample_amount
         self.sample_rate = sample_rate
         self.file_name = file_name
-
-    def get_zeros(self,min,max,count=0 ):
-        min = str(min)
-        if min[count]:
-            return self.get_zeros(min,max,count) 
+        if self.search_file(file_path,self.file_name) == None:
+            return str
         else:
-            self.zeros = count
+            return int
+    def count_zeros_in_float(self,number):
+        number_str = str(number)
+
+        # Initialize a counter for zeros
+        zeros_count = 0
+
+        # Iterate over each character in the string
+        for char in number_str:
+            if char == '0':
+                zeros_count += 1
+        self.zeros = zeros_count
+        return 
     
 
     
@@ -31,13 +40,32 @@ class DAQ:
     def create_interval(self,start, end, step):
         interval_list = []
         num = start
-        self.zeros = start.count(0)
         while round(num,self.zeros) <= end:
             interval_list.append(round(num,self.zeros))
             num += step
         return interval_list
 
-    def setup(self,interval,steps,string):
+    import os
+
+    def search_file(self,folder_path, file_name):
+        for root, dirs, files in os.walk(folder_path):
+            if file_name in files:
+                return os.path.join(root, file_name)
+        return None
+
+# # Usage example
+# folder_path = '/path/to/folder'
+# file_name = 'example.txt'
+# result = search_file(folder_path, file_name)
+
+# if result:
+#     print(f"The file '{file_name}' exists in the folder: {result}")
+# else:
+#     print(f"The file '{file_name}' does not exist in the folder.")
+
+
+
+    def setup(self,interval,steps,string,iterations):
         self.steps = steps        
         file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         voltage_min = min(interval)
@@ -45,9 +73,13 @@ class DAQ:
         self.start_voltage = start_voltage
         voltage_max = max(interval)
         self.start_voltage_max = voltage_max
-        iterations = 2
+       
         
         ############SETUP############
+       
+        
+
+
         actual_file = file_path+self.file_name
         self.actual_file = actual_file
 
@@ -139,26 +171,60 @@ class DAQ:
 
 
 ############## INPUTS ############## 
-file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
-                #selecting data from which files
+# file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
+# file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+
+# start_time = time.time()
+# analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
+# analog_output_channel = "cDAQ1Mod1/ao0"
+# SAMPLE_AMOUNT = 10
+# SAMPLE_RATE = 1000
+# VOLTAGE_MIN = -0.005
+# VOLTAGE_MAX = 0.005
+# STEPS = 0.001
+# ITERATIVES = 2
+############## UI ############## 
+print('WELCOME TO THE AUTO-PROBER 2023, please fill out the following: ')
+file_name = input("Filename: ") 
+file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
+file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+
 start_time = time.time()
-analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
-analog_output_channel = "cDAQ1Mod1/ao0"
-SAMPLE_AMOUNT = 10
-SAMPLE_RATE = 1000
-VOLTAGE_MIN = -0.05
-VOLTAGE_MAX = 0.05
-STEPS = 0.01
-ITERATIVES = 2
+analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+analog_output_channel = input("Analog output channel: ")
+
+SAMPLE_AMOUNT = int(input("Sample amount: "))
+SAMPLE_RATE = int(input("Sample rate [Hz]: "))
+VOLTAGE_MIN = float(input("Voltage minimum: "))
+VOLTAGE_MAX = float(input("Voltage max: "))
+STEPS = float(input("Incremental steps between voltages: "))
+ITERATIVES = int(input("Iteratives: "))
+
+
 
 
 ############## CALLING MAIN ############## 
-
-
 main = DAQ(analog_input_channel,analog_output_channel)
-main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name)
+logical_check = main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
+if logical_check == str:
+    pass
+elif logical_check == int: ### Means the file exists already
+    print("The file you have asked to write in seems to already exist, please select one of the options below with the numeric keypad:")
+    print(" 1. Overwrite pre-existing file")
+    print(" 2. Select a new name")
+    new_or_not =input()
+    if new_or_not == "2":
+        new_name_file = input("Please submit a new name for a file: ")
+        new_name_file = new_name_file+".json"
+        main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
+    else:
+        pass
+
+
+
+main.count_zeros_in_float(VOLTAGE_MIN)
 voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
-main.setup(voltage_levels,STEPS,str)
+main.setup(voltage_levels,STEPS,str,ITERATIVES)
  ### How many times the user wants to execute each single voltage characteristic
  ## check holder
 
