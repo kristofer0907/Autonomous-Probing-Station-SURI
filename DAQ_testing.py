@@ -168,7 +168,6 @@ class DAQ:
 file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
 file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 
-start_time = time.time()
 analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
 analog_output_channel = "cDAQ1Mod1/ao0"
 SAMPLE_AMOUNT = 10
@@ -179,7 +178,7 @@ STEPS = 0.001
 ITERATIVES = 2
 variable = "Current"
 ############## UI ############## 
-# print('WELCOME TO THE AUTO-PROBER 2023, please fill out the following: ')
+print('WELCOME TO THE AUTO-PROBER2023 , please select one of the following options: ')
 # file_name = input("Filename: ") 
 # file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
 # file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
@@ -199,45 +198,93 @@ variable = "Current"
 
 
 ############## CALLING MAIN ############## 
+
+class UI:
+    
+    def start(self):
+                
+        print(" 1. I-V characteristics")
+        print(" 2. I-t characteristics")
+        print(" 3. Calibration")
+        users_choice = input("  Input:")
+
+        if users_choice == "1":
+            return(self.get_info_for_DAQ())
+        elif users_choice == "2":
+            pass
+        elif users_choice == "3":
+            pass
+        else:
+            print("Please select an available option")
+            time.sleep(1)
+            self.start()
+    def file_exists(self):
+        print("The file you have asked to write in seems to already exist, please select one of the options below:")
+        print(" 1. Overwrite pre-existing file")
+        print(" 2. Select a new name")
+        new_or_not =input(" Input: ")
+        if new_or_not == "2":
+            new_name_file = input("Please submit a new name for a file: ")
+            new_name_file = new_name_file+".json"
+            return new_name_file
+        elif new_or_not =="1":
+            return
+        else:
+            print("Please select an available option")
+            time.sleep(1)
+            self.file_exists()
+            #TODO make this into a function or something so that its more 
+            # easily possible to make the user start over again
+
+    def get_info_for_DAQ(self):
+        file_name = input("Filename: ") 
+        file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
+        file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+        analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+        analog_output_channel = input("Analog output channel: ")
+        SAMPLE_AMOUNT = int(input("Sample amount: "))
+        SAMPLE_RATE = int(input("Sample rate [Hz]: "))
+        VOLTAGE_MIN = float(input("Voltage minimum: "))
+        VOLTAGE_MAX = float(input("Voltage max: "))
+        STEPS = float(input("Incremental steps between voltages: "))
+        ITERATIVES = int(input("Iteratives: "))
+        return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES
+
+
+
+
+
+user_interface = UI()
+analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES= user_interface.start()
+        
 main = DAQ(analog_input_channel,analog_output_channel)
 logical_check = main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
-if logical_check == str:
+if logical_check == str: #Means it doesnt exist already
     pass
 elif logical_check == int: ### Means the file exists already
-    print("The file you have asked to write in seems to already exist, please select one of the options below with the numeric keypad:")
-    print(" 1. Overwrite pre-existing file")
-    print(" 2. Select a new name")
-    new_or_not =input(" ")
-    if new_or_not == "2":
-        new_name_file = input("Please submit a new name for a file: ")
-        new_name_file = new_name_file+".json"
-        main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
-    elif new_or_not =="1":
-        pass
+    new_name_file= user_interface.file_exists()
+    if new_name_file == None:
+        main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
     else:
-        print("Please select an available option")
-        #TODO make this into a function or something so that its more 
-        # easily possible to make the user start over again
+        main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
 
-
+start_time = time.time()
 main.count_zeros_in_float(VOLTAGE_MIN)
 voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
 main.setup(voltage_levels,STEPS,variable,ITERATIVES)
- ### How many times the user wants to execute each single voltage characteristic
- ## check holder
 
 for voltage_level in voltage_levels:
     x = 1
     while x <= ITERATIVES:    
         main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
         current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+                #voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
         main.storing(voltage_level,current_reading,x,variable)
-        # variable = "Voltage"
-        # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
-        # main.storing(voltage_level,voltage_reading,x,variable)
-        #main.plotter(current_time,current_reading)
-        
+                # variable = "Voltage"
+                # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
+                # main.storing(voltage_level,voltage_reading,x,variable)
+                #main.plotter(current_time,current_reading)
+                
         x += 1
 end_time = time.time()-start_time
 print(end_time)
