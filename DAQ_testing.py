@@ -250,44 +250,77 @@ class UI:
         ITERATIVES = int(input("Iteratives: "))
         return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES
 
+    def ending(self):
+        print("Data has been sucessfully collected, select one of the following options: ")
+        print(" 1. Run again with same constraints and conditions")
+        print(" 2. Run with different constraints and conditions")
+        print(" 3. Return to main menu")
+        print(" 4. Quit program")
+        users_end = input(" Input: ")
+        if users_end == "1":
+            boolean = True
+            Run_everything().anything(boolean)
+        elif users_end == "2":
+            Run_everything().anything()
+        elif users_end == "3":
+            pass
+        elif users_end == "4":
+            pass
+        else:
+            print("Please select an available option")
+            time.sleep(1)
+            self.ending()
 
 
 
 
-user_interface = UI()
-analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES= user_interface.start()
+class Run_everything():
+    def anything(self,boolean): ### For I-V option
+        user_interface = UI()
+        if boolean == False:
+            global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES
+
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES= user_interface.start()
         
-main = DAQ(analog_input_channel,analog_output_channel)
-logical_check = main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
-if logical_check == str: #Means it doesnt exist already
-    pass
-elif logical_check == int: ### Means the file exists already
-    new_name_file= user_interface.file_exists()
-    if new_name_file == None:
-        main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
-    else:
-        main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
 
-start_time = time.time()
-main.count_zeros_in_float(VOLTAGE_MIN)
-voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
-main.setup(voltage_levels,STEPS,variable,ITERATIVES)
+        main = DAQ(analog_input_channel,analog_output_channel)
+        logical_check = main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
+        if logical_check == str: #Means it doesnt exist already
+            pass
+        elif logical_check == int: ### Means the file exists already
+            new_name_file= user_interface.file_exists()
+            if new_name_file == None:
+                main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
+            else:
+                main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
 
-for voltage_level in voltage_levels:
-    x = 1
-    while x <= ITERATIVES:    
-        main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
-        current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-                #voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-        main.storing(voltage_level,current_reading,x,variable)
-                # variable = "Voltage"
-                # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
-                # main.storing(voltage_level,voltage_reading,x,variable)
-                #main.plotter(current_time,current_reading)
-                
-        x += 1
-end_time = time.time()-start_time
-print(end_time)
+        start_time = time.time()
+        main.count_zeros_in_float(VOLTAGE_MIN)
+        voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
+        main.setup(voltage_levels,STEPS,variable,ITERATIVES)
+
+        for voltage_level in voltage_levels:
+            x = 1
+            while x <= ITERATIVES:    
+                main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
+                current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+                        #voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+                main.storing(voltage_level,current_reading,x,variable)
+                        # variable = "Voltage"
+                        # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
+                        # main.storing(voltage_level,voltage_reading,x,variable)
+                        #main.plotter(current_time,current_reading)
+                        
+                x += 1
+        end_time = time.time()-start_time
+        print("")
+        print(f"Time it took to collect data: {end_time}")
+        print("")
+        user_interface.ending()
+        
+
+boolean = False
+Run_everything().anything(boolean)
 
 # Get user to state how many iterations, the voltage interval, the step in between, and the filename
 
