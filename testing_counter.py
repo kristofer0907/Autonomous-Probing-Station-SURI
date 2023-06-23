@@ -66,10 +66,54 @@
 
 
 
+import datashader as ds
+import pandas as pd
+import colorcet as cc
+import json
+import matplotlib.pyplot as plt
 
-def tester(variable):
-    print(variable)
+# Load the JSON data from the file
+with open('test6.json', 'r') as file:
+    data = json.load(file)
 
 
-tester("current")
-print("Current")
+# 3 variables: 1. Type of data.     2. Voltage level       3. Iterations
+
+step = 0.001
+variable = "Current"
+voltage_max = 0.005
+voltage_min = -0.005
+x = voltage_min
+while x != voltage_max:
+    for i in range(1,3):
+        value = data[variable][str(x)][str(i)]
+        current = data[variable][str(x)]
+        current_values = list(current.values())
+        plt.scatter(value,current_values)
+    x = round(x+step,3)
+
+plt.xlabel("Voltage")
+plt.ylabel("Current")
+plt.legend()
+
+
+
+print(value)
+
+
+# for i in range(1,3): #Iterations
+#     for data["Current"][str(i)], measurements in data.items():
+#         # Convert the current measurements to a numpy array
+#         current_values = data["Current"][i].items()
+
+#         # Plot the current measurements
+#         plt.plot(range(1, 11), current_values, marker='o', label=f'Voltage: {data["Current"][str(i)]}')
+
+# # Add labels and legends to the plot
+# plt.xlabel('Measurement')
+# plt.ylabel('Current')
+# plt.title('Current Measurements for Different Voltage Levels')
+# plt.legend()
+
+# # Display the plot
+# plt.show()
