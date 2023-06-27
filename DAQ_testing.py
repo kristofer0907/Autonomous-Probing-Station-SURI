@@ -168,14 +168,14 @@ class DAQ:
 file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
 file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 
-analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
-analog_output_channel = "cDAQ1Mod1/ao0"
-SAMPLE_AMOUNT = 10
-SAMPLE_RATE = 1000
-VOLTAGE_MIN = -0.005
-VOLTAGE_MAX = 0.005
-STEPS = 0.001
-ITERATIVES = 2
+# analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
+# analog_output_channel = "cDAQ1Mod1/ao0"
+# SAMPLE_AMOUNT = 10
+# SAMPLE_RATE = 1000
+# VOLTAGE_MIN = -0.005
+# VOLTAGE_MAX = 0.005
+# STEPS = 0.001
+# ITERATIVES = 2
 variable = "Current"
 ############## UI ############## 
 print('WELCOME TO THE AUTO-PROBER2023 , please select one of the following options: ')
@@ -300,11 +300,13 @@ class Run_everything():
         main.setup(voltage_levels,STEPS,variable,ITERATIVES)
 
         for voltage_level in voltage_levels:
+            if voltage_level == -0.0:
+                voltage_level =0.0
             x = 1
             while x <= ITERATIVES:    
                 main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
                 current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-                        #voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+                voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
                 main.storing(voltage_level,current_reading,x,variable)
                         # variable = "Voltage"
                         # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
