@@ -73,7 +73,7 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 # Load the JSON data from the file
-with open('test10.json', 'r') as file:
+with open('test11.json', 'r') as file:
     data = json.load(file)
 
 
@@ -84,13 +84,13 @@ variable = "Current"
 voltage_max = 1.0
 voltage_min = -1.0
 x = voltage_min
-GAIN = 1
+GAIN = 1e-9
 empty_dict = {}
 while x <= voltage_max:
     for i in range(1,2):
         value = data[variable][str(x)][str(i)]
-        if i == 2:
-            empty_dict[x] +=[v * GAIN for v in value]
+        #if i == 2:
+            #empty_dict[x] +=[v * GAIN for v in value]
 
         empty_dict[x]=[v * GAIN for v in value]
         #plt.scatter(value,current_values)
@@ -108,22 +108,27 @@ for key, val in empty_dict.items():
 
 
 
-x_coords = np.array(x_coords)
-flattened_values = np.array(flattened_values)
+x_coords = np.array(x_coords) # Voltage input
+flattened_values = np.array(flattened_values) #Voltage measured
+
+
+junction_current = flattened_values
+
+
 
 # Calculate G/G_0 values
-G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
-print(G_G0_values)
+# G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
+# print(G_G0_values)
 
 
-slope, intercept = np.polyfit(x_coords, flattened_values, 1)
+slope, intercept = np.polyfit(x_coords, junction_current, 1)
 
 # Generate the predicted y-values based on the line equation
 y_fit = slope * np.array(x_coords) + intercept
 
 
 # Plot the data as a scatter plot
-plt.scatter(x_coords, flattened_values, marker='o',facecolors="none" ,edgecolors='b')
+plt.scatter(x_coords, junction_current, marker='o',facecolors="none" ,edgecolors='b')
 
 
 plt.plot(x_coords, y_fit, color='r', label='Line of Best Fit')

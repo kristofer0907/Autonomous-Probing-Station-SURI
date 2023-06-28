@@ -31,10 +31,49 @@ class DAQ:
         for char in number_str:
             if char == '0':
                 zeros_count += 1
-        self.zeros = zeros_count
+        self.zeros = zeros_count+2
         return 
     
+    def plotter(self,iterations):
+        with open(self.actual_file, 'r') as file:
+            data = json.load(file)
+        x = self.start_voltage
+        
+        empty_dict = {}
+        while x <= self.start_voltage_max:
+            for i in range(1,iterations+1):
+                value = data[variable][str(x)][str(i)]
+                #if i == 2:
+                    #empty_dict[x] +=[v * GAIN for v in value]
 
+                empty_dict[x]=[v * GAIN for v in value]
+                #plt.scatter(value,current_values)
+            x = round(x+self.steps,self.zeros)
+
+        keys = list(empty_dict.keys())
+        values = list(empty_dict.values())
+
+        # Flatten the values list
+        flattened_values = [item for sublist in values for item in sublist]
+        x_coords = []
+        for key, val in empty_dict.items():
+            x_coords.extend([key] * len(val))
+
+        x_coords = np.array(x_coords) # Voltage input
+        flattened_values = np.array(flattened_values) #Voltage measured
+        junction_current = flattened_values
+        # Calculate G/G_0 values
+        # G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
+        # print(G_G0_values)
+        slope, intercept = np.polyfit(x_coords, junction_current, 1)
+        y_fit = slope * np.array(x_coords) + intercept
+        plt.scatter(x_coords, junction_current, marker='o',facecolors="none" ,edgecolors='b')
+        plt.plot(x_coords, y_fit, color='r', label='Line of Best Fit')
+        plt.xlabel('Voltage')
+        plt.ylabel('Current')
+        plt.title('I-V Plot')
+        plt.grid(True)
+        plt.show()
     
 
     def create_interval(self,start, end, step):
@@ -156,13 +195,6 @@ class DAQ:
             json.dump(data,json_file,indent =4 )
 
 
-        
-
-    def plotter(self,x,y):
-        plt.plot(x,y)
-        plt.show()
-
-
 
 ############## INPUTS ############## 
 file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
@@ -248,7 +280,8 @@ class UI:
         VOLTAGE_MAX = float(input("Voltage max: "))
         STEPS = float(input("Incremental steps between voltages: "))
         ITERATIVES = int(input("Iteratives: "))
-        return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES
+        GAIN = float(input("Gain: "))
+        return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN
 
     def ending(self):
         print("Data has been sucessfully collected, select one of the following options: ")
@@ -261,7 +294,8 @@ class UI:
             boolean = True
             Run_everything().anything(boolean)
         elif users_end == "2":
-            Run_everything().anything()
+            boolean = False
+            Run_everything().anything(boolean)
         elif users_end == "3":
             pass
         elif users_end == "4":
@@ -278,9 +312,9 @@ class Run_everything():
     def anything(self,boolean): ### For I-V option
         user_interface = UI()
         if boolean == False:
-            global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES
+            global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES,GAIN
 
-            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES= user_interface.start()
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.start()
         
 
         main = DAQ(analog_input_channel,analog_output_channel)
@@ -305,19 +339,20 @@ class Run_everything():
             x = 1
             while x <= ITERATIVES:    
                 main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
-                current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+                #current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
                 voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-                main.storing(voltage_level,current_reading,x,variable)
+                #main.storing(voltage_level,current_reading,x,variable)
                         # variable = "Voltage"
                         # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
-                        # main.storing(voltage_level,voltage_reading,x,variable)
-                        #main.plotter(current_time,current_reading)
+                main.storing(voltage_level,voltage_reading,x,variable)
+                
                         
                 x += 1
         end_time = time.time()-start_time
         print("")
         print(f"Time it took to collect data: {end_time}")
         print("")
+        main.plotter(ITERATIVES)
         user_interface.ending()
         
 
