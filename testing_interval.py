@@ -1,30 +1,36 @@
-def create_interval(start, end, step,zeros):
-    
-        interval_list = []
-        num = start
-        while round(num,zeros) <= end:
-            interval_list.append(round(num,zeros))
-            num += step
-        return interval_list
+import nidaqmx
+
+def validate_input(device_name, channel_name):
+    try:
+        with nidaqmx.Task() as task:
+            task.ai_channels.add_ai_voltage_chan(f"{device_name}/{channel_name}")
+            
+        return True
+    except nidaqmx.DaqError:
+        return False
 
 
-def count_zeros_in_float(number):
-        number_str = str(number)
-
-        # Initialize a counter for zeros
-        zeros_count = 0
-
-        # Iterate over each character in the string
-        for char in number_str:
-            if char == '0':
-                zeros_count += 1
-        zerosa = zeros_count+1
-        return zerosa+1
+def validate_output(device_name, channel_name):
+    try:
+        with nidaqmx.Task() as task:
+            task.ao_channels.add_ao_voltage_chan(f"{device_name}/{channel_name}")
+        return True
+    except nidaqmx.DaqError:
+        return False
 
 
 
 
-zeros = count_zeros_in_float(-0.1)
-print(zeros)
-a = (create_interval(-1,1,0.1,zeros))
-print(a)
+# Example usage
+device_name_input = "cDAQ1Mod2"
+device_name_output = "cDAQ1Mod1"
+analog_input_channel = "ai0"
+analog_output_channel = "ao0"
+
+is_input_valid = validate_input(device_name_input, analog_input_channel)
+is_output_valid = validate_output(device_name_output, analog_output_channel)
+
+if is_input_valid and is_output_valid:
+    print("Input and output channel names are valid.")
+else:
+    print("Invalid channel name(s). Please check the names provided.")

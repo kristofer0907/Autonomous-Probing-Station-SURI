@@ -6,12 +6,10 @@ import math
 import json
 import os
 
-
-
 class DAQ:
-    def __init__(self,analog_input_channel,analog_output_channel):
-        self.analog_input_channel =analog_input_channel
-        self.analog_output_channel = analog_output_channel
+    # def __init__(self,analog_input_channel,analog_output_channel):
+    #     self.analog_input_channel =analog_input_channel
+    #     self.analog_output_channel = analog_output_channel
 
     def get_user_parameters(self,sample_amount,sample_rate,file_name,file_path):
         self.sample_amount = sample_amount
@@ -195,6 +193,26 @@ class DAQ:
             json.dump(data,json_file,indent =4 )
 
 
+    def verify(self,string,name):
+        if string == "channel output":
+            try:
+                with nidaqmx.Task() as task:
+                    task.ao_channels.add_ao_voltage_chan(name)
+                return True
+            except nidaqmx.DaqError:
+                return False
+        elif string == "channel input":
+            try:
+                with nidaqmx.Task() as task:
+                    task.ai_channels.add_ai_voltage_chan(name)
+                    
+                return True
+            except nidaqmx.DaqError:
+                return False
+            
+        elif string == "number":
+            pass
+     
 
 ############## INPUTS ############## 
 file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
@@ -210,7 +228,7 @@ file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 # ITERATIVES = 2
 variable = "Current"
 ############## UI ############## 
-print('WELCOME TO THE AUTO-PROBER2023 , please select one of the following options: ')
+print('WELCOME TO THE AUTO-PROBER2023, please select one of the following options: ')
 # file_name = input("Filename: ") 
 # file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
 # file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
@@ -238,7 +256,7 @@ class UI:
         print(" 1. I-V characteristics")
         print(" 2. I-t characteristics")
         print(" 3. Calibration")
-        users_choice = input("  Input:")
+        users_choice = input("  Input: ")
 
         if users_choice == "1":
             return(self.get_info_for_DAQ())
@@ -273,14 +291,36 @@ class UI:
         file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
         file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+        verify_input_channel = DAQ().verify("channel input",analog_input_channel)
+        if verify_input_channel == False:
+            print("The name given for the analog input is incorrect, try again")
+            self.get_info_for_DAQ()
         analog_output_channel = input("Analog output channel: ")
-        SAMPLE_AMOUNT = int(input("Sample amount: "))
-        SAMPLE_RATE = int(input("Sample rate [Hz]: "))
+        verify_output_channel = DAQ().verify("channel output",analog_output_channel)
+        if verify_output_channel ==False:    
+            print("The name given for the analog output is incorrect, try again")
+            self.get_info_for_DAQ()
+        try:
+            SAMPLE_AMOUNT = int(input("Sample amount: "))
+            SAMPLE_RATE = int(input("Sample rate [Hz]: "))
+        except:
+            print("The sample amount and sample rate can only be whole numbers")
+            self.get_info_for_DAQ()
         VOLTAGE_MIN = float(input("Voltage minimum: "))
         VOLTAGE_MAX = float(input("Voltage max: "))
         STEPS = float(input("Incremental steps between voltages: "))
         ITERATIVES = int(input("Iteratives: "))
         GAIN = float(input("Gain: "))
+        print("Would you like to continue(yes/no)?")
+        selection = input("Input: ")
+        if selection == "yes":
+            pass
+        elif selection =="no":
+            pass
+            #self.get_info_for_DAQ()
+        else:
+            print("Please enter either yes or no")
+
         return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN
 
     def ending(self):
@@ -317,7 +357,8 @@ class Run_everything():
             analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.start()
         
 
-        main = DAQ(analog_input_channel,analog_output_channel)
+        main = DAQ()
+        
         logical_check = main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
         if logical_check == str: #Means it doesnt exist already
             pass
@@ -339,6 +380,7 @@ class Run_everything():
             x = 1
             while x <= ITERATIVES:    
                 main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
+              
                 #current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
                 voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
                 #main.storing(voltage_level,current_reading,x,variable)
@@ -358,20 +400,3 @@ class Run_everything():
 
 boolean = False
 Run_everything().anything(boolean)
-
-# Get user to state how many iterations, the voltage interval, the step in between, and the filename
-
-
-# ----------------- >>>>>>>>>>>
-# ----------------- >>>>>>>>>>>>>>
-# ----------------- >>>>>>>>>>>
-
-# Create a json file with the amount of iterations and the voltage interval
-
-# ----------------- >>>>>>>>>>>
-# ----------------- >>>>>>>>>>>>>>
-# ----------------- >>>>>>>>>>>
-
-# Take measurements for each iteration, store them in the json file 
-
-
