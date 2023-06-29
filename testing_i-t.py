@@ -24,7 +24,7 @@ with nidaqmx.Task() as task:
     voltage_data = []
 
     while len(voltage_data) < num_samples:
-        samples_to_read = min(num_samples - len(voltage_data), task.in_stream.avail_samp_per_chan)
+        samples_to_read = min(num_samples - len(voltage_data), 100)
         voltage_data.extend(task.read(number_of_samples_per_channel=samples_to_read))
 
     # Stop the task
