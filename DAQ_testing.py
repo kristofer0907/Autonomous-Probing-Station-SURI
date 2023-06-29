@@ -7,10 +7,6 @@ import json
 import os
 
 class DAQ:
-    # def __init__(self,analog_input_channel,analog_output_channel):
-    #     self.analog_input_channel =analog_input_channel
-    #     self.analog_output_channel = analog_output_channel
-
     def get_user_parameters(self,sample_amount,sample_rate,file_name,file_path):
         self.sample_amount = sample_amount
         self.sample_rate = sample_rate
@@ -21,11 +17,7 @@ class DAQ:
             return int
     def count_zeros_in_float(self,number):
         number_str = str(number)
-
-        # Initialize a counter for zeros
         zeros_count = 0
-
-        # Iterate over each character in the string
         for char in number_str:
             if char == '0':
                 zeros_count += 1
@@ -42,10 +34,8 @@ class DAQ:
             for i in range(1,iterations+1):
                 value = data[variable][str(x)][str(i)]
                 #if i == 2:
-                    #empty_dict[x] +=[v * GAIN for v in value]
-
+                    #empty_dict[x] +=[v * GAIN for v in value] #TODO Account for more iteratations
                 empty_dict[x]=[v * GAIN for v in value]
-                #plt.scatter(value,current_values)
             x = round(x+self.steps,self.zeros)
 
         keys = list(empty_dict.keys())
@@ -89,17 +79,6 @@ class DAQ:
                 return os.path.join(root, file_name)
         return None
 
-# # Usage example
-# folder_path = '/path/to/folder'
-# file_name = 'example.txt'
-# result = search_file(folder_path, file_name)
-
-# if result:
-#     print(f"The file '{file_name}' exists in the folder: {result}")
-# else:
-#     print(f"The file '{file_name}' does not exist in the folder.")
-
-
 
     def setup(self,interval,steps,variable,iterations):
         self.steps = steps        
@@ -113,8 +92,7 @@ class DAQ:
         
         ############SETUP############
        
-        
-
+    
 
         actual_file = file_path+self.file_name
         self.actual_file = actual_file
@@ -215,39 +193,11 @@ class DAQ:
      
 
 ############## INPUTS ############## 
-file_name = "test6.json" # User should select the filename, said filename will be used in the future for 
-file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 
-# analog_input_channel = "cDAQ1Mod2/ai0"  # Replace with the appropriate channel name for your setup
-# analog_output_channel = "cDAQ1Mod1/ao0"
-# SAMPLE_AMOUNT = 10
-# SAMPLE_RATE = 1000
-# VOLTAGE_MIN = -0.005
-# VOLTAGE_MAX = 0.005
-# STEPS = 0.001
-# ITERATIVES = 2
 variable = "Current"
 ############## UI ############## 
 print('WELCOME TO THE AUTO-PROBER2023, please select one of the following options: ')
-# file_name = input("Filename: ") 
-# file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
-# file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
 
-# start_time = time.time()
-# analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
-# analog_output_channel = input("Analog output channel: ")
-
-# SAMPLE_AMOUNT = int(input("Sample amount: "))
-# SAMPLE_RATE = int(input("Sample rate [Hz]: "))
-# VOLTAGE_MIN = float(input("Voltage minimum: "))
-# VOLTAGE_MAX = float(input("Voltage max: "))
-# STEPS = float(input("Incremental steps between voltages: "))
-# ITERATIVES = int(input("Iteratives: "))
-
-
-
-
-############## CALLING MAIN ############## 
 
 class UI:
     
@@ -256,12 +206,12 @@ class UI:
         print(" 1. I-V characteristics")
         print(" 2. I-t characteristics")
         print(" 3. Calibration")
-        users_choice = input("  Input: ")
-
+        users_choice = input("Input: ")
         if users_choice == "1":
             return(self.get_info_for_DAQ())
         elif users_choice == "2":
-            pass
+            return(self.get_info_for_DAQ())
+            
         elif users_choice == "3":
             pass
         else:
@@ -316,7 +266,7 @@ class UI:
         if selection == "yes":
             pass
         elif selection =="no":
-            pass
+            self.start()
             #self.get_info_for_DAQ()
         else:
             print("Please enter either yes or no")
@@ -346,7 +296,7 @@ class UI:
             self.ending()
 
 
-
+############## CALLING MAIN ############## 
 
 class Run_everything():
     def anything(self,boolean): ### For I-V option
