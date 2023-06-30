@@ -284,10 +284,10 @@ class UI:
             boolean = True
             Run_everything().anything(boolean)
         elif users_end == "2":
-            boolean = False
+            boolean = None
             Run_everything().anything(boolean)
         elif users_end == "3":
-            pass
+            self.start()
         elif users_end == "4":
             pass
         else:
@@ -301,11 +301,16 @@ class UI:
 class Run_everything():
     def anything(self,boolean): ### For I-V option
         user_interface = UI()
+
         if boolean == False:
             global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES,GAIN
-
             analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.start()
-        
+
+        elif boolean == True:
+            pass
+        else:
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.get_info_for_DAQ()
+  
 
         main = DAQ()
         
