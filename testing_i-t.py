@@ -8,14 +8,19 @@ desired_time = float(input("Enter the desired measurement time in seconds: "))
 
 # Create a task
 with nidaqmx.Task() as task:
-    # Add an analog input voltage channel
-    task.ai_channels.add_ai_voltage_chan("CDAQ1Mod2/ai0")  # Replace with your channel name
+    # Add an analog output voltage channel
+    task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0")  # Replace with your channel name
 
     # Configure timing settings
     sample_rate = 1000  # Set the desired sample rate in Hz
     num_samples = int(sample_rate * desired_time)
 
     task.timing.cfg_samp_clk_timing(rate=sample_rate, samps_per_chan=num_samples)
+
+    # Set the analog output voltage
+    voltage_output = 0.5  # Set the desired voltage output in Volts
+    initial_samples = np.full(1000, voltage_output) 
+    task.write(voltage_output)
 
     # Start the task
     task.start()
