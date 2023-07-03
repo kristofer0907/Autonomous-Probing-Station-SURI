@@ -208,9 +208,9 @@ class UI:
         print(" 3. Calibration")
         users_choice = input("Input: ")
         if users_choice == "1":
-            return(self.get_info_for_DAQ())
+            Run_everything().anything(False)
         elif users_choice == "2":
-            return(self.get_info_for_DAQ())
+            return(self.get_info_i_t())
             
         elif users_choice == "3":
             pass
@@ -237,9 +237,6 @@ class UI:
             # easily possible to make the user start over again
 
     def get_info_for_DAQ(self):
-        file_name = input("Filename: ") 
-        file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
-        file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
         verify_input_channel = DAQ().verify("channel input",analog_input_channel)
         if verify_input_channel == False:
@@ -250,6 +247,9 @@ class UI:
         if verify_output_channel ==False:    
             print("The name given for the analog output is incorrect, try again")
             self.get_info_for_DAQ()
+        file_name = input("Filename: ") 
+        file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
+        file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         try:
             SAMPLE_AMOUNT = int(input("Sample amount: "))
             SAMPLE_RATE = int(input("Sample rate [Hz]: "))
@@ -273,6 +273,31 @@ class UI:
 
         return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN
 
+    
+    def get_info_i_t(self):
+        analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+        verify_input_channel = DAQ().verify("channel input",analog_input_channel)
+        if verify_input_channel == False:
+            print("The name given for the analog input is incorrect, try again")
+            self.get_info_for_DAQ()
+        file_name = input("Filename: ") 
+        file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
+        file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+       
+        desired_voltage = float(input("Enter the desired voltage level in volts: "))
+        desired_time = float(input("Enter the desired measurement time in seconds: "))
+        num_samples = int(input("Enter the number of samples to acquire: "))
+
+        print("Would you like to continue(yes/no)?")
+        selection = input("Input: ")
+        if selection == "yes":
+            pass
+        elif selection =="no":
+            self.start()
+            #self.get_info_for_DAQ()
+        else:
+            print("Please enter either yes or no")
+        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel
     def ending(self):
         print("Data has been sucessfully collected, select one of the following options: ")
         print(" 1. Run again with same constraints and conditions")
@@ -301,10 +326,12 @@ class UI:
 class Run_everything():
     def anything(self,boolean): ### For I-V option
         user_interface = UI()
+        
+
 
         if boolean == False:
             global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES,GAIN
-            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.start()
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.get_info_for_DAQ()
 
         elif boolean == True:
             pass
@@ -353,7 +380,8 @@ class Run_everything():
         user_interface.ending()
         
 
-    
+    def something(self):
+        pass
 
 boolean = False
-Run_everything().anything(boolean)
+UI().start()
