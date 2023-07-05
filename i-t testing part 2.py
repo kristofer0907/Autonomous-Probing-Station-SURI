@@ -113,7 +113,7 @@ with nidaqmx.Task() as output_task:
         voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
 
 # Calculate the current from the voltage data
-current_data = [1e-9 * voltage for voltage in voltage_data]
+current_data = [GAIN*voltage for voltage in voltage_data]
 
 # Generate the time axis for the plot
 time = np.linspace(0, desired_time, len(current_data))
