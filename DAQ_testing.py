@@ -210,7 +210,7 @@ class UI:
         if users_choice == "1":
             Run_everything().anything(False)
         elif users_choice == "2":
-            return(self.get_info_i_t())
+            Run_everything().something()
             
         elif users_choice == "3":
             pass
@@ -324,19 +324,25 @@ class UI:
 ############## CALLING MAIN ############## 
 
 class Run_everything():
+    def __init__(self):
+        user_interface=  UI()
+        self.user_interface = user_interface
+
+
+
     def anything(self,boolean): ### For I-V option
-        user_interface = UI()
+       
         
 
 
         if boolean == False:
             global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES,GAIN
-            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.get_info_for_DAQ()
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= self.user_interface.get_info_for_DAQ()
 
         elif boolean == True:
             pass
         else:
-            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= user_interface.get_info_for_DAQ()
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN= self.user_interface.get_info_for_DAQ()
   
 
         main = DAQ()
@@ -345,7 +351,7 @@ class Run_everything():
         if logical_check == str: #Means it doesnt exist already
             pass
         elif logical_check == int: ### Means the file exists already
-            new_name_file= user_interface.file_exists()
+            new_name_file= self.user_interface.file_exists()
             if new_name_file == None:
                 main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path)
             else:
@@ -377,11 +383,44 @@ class Run_everything():
         print(f"Time it took to collect data: {end_time}")
         print("")
         main.plotter(ITERATIVES)
-        user_interface.ending()
+        self.user_interface.ending()
         
 
     def something(self):
-        pass
+        desired_voltage,desired_time,num_samples,analog_output,analog_input= self.user_interface.get_info_i_t()
+        with nidaqmx.Task() as output_task:
+            # Add an analog output voltage channel
+            output_task.ao_channels.add_ao_voltage_chan(analog_output)  # Replace with your channel name
+
+            # Configure the desired voltage level
+            output_task.write(desired_voltage)
+
+            # Create a task for analog input
+            with nidaqmx.Task() as input_task:
+                # Add an analog input voltage channel
+                input_task.ai_channels.add_ai_voltage_chan(analog_input)  # Replace with your channel name
+
+                # Configure timing settings
+                sample_rate = num_samples / desired_time  # Set the sample rate based on the desired time and number of samples
+                input_task.timing.cfg_samp_clk_timing(rate=sample_rate, samps_per_chan=num_samples)
+
+                # Read the voltage data
+                voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
+
+        # Calculate the current from the voltage data
+        current_data = [10 * voltage for voltage in voltage_data]
+
+        # Generate the time axis for the plot
+        time = np.linspace(0, desired_time, len(current_data))
+
+        # Plot the current measurements over time
+        plt.plot(time, current_data)
+        plt.xlabel('Time (s)')
+        plt.ylabel('Current (A)')
+        plt.title('Current vs. Time')
+        plt.grid(True)
+        plt.show()
+
 
 boolean = False
 UI().start()
