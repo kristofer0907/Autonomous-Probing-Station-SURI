@@ -84,7 +84,7 @@ class DAQ:
         self.steps = steps        
         file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         voltage_min = min(interval)
-        start_voltage = voltage_min
+        start_voltage = 0.0
         self.start_voltage = start_voltage
         voltage_max = max(interval)
         self.start_voltage_max = voltage_max
@@ -101,6 +101,7 @@ class DAQ:
        
 
         data[variable] = {}
+        #### Take care of number going from start to max ####
         while start_voltage <=voltage_max:
             data[variable][round(start_voltage,self.zeros)] = {}
             x = 1
@@ -110,6 +111,29 @@ class DAQ:
                 x += 1
 
             start_voltage = round(start_voltage + steps,self.zeros)
+        #### Take care of number going from max to min ####
+        tart_voltage = round(start_voltage - steps,self.zeros)
+        while start_voltage>= voltage_min:
+            data[variable][round(start_voltage,self.zeros)] = {}
+            x = 1
+            while x <= iterations:
+                data[variable][round(start_voltage,self.zeros)][x] = ""
+
+                x += 1
+
+            start_voltage = round(start_voltage - steps,self.zeros)
+
+        #### Take care of number going from min to start #### 
+        while start_voltage<=0:
+            data[variable][round(start_voltage,self.zeros)] = {}
+            x = 1
+            while x <= iterations:
+                data[variable][round(start_voltage,self.zeros)][x] = ""
+
+                x += 1
+
+            start_voltage = round(start_voltage + steps,self.zeros)
+
 
 
         with open(actual_file,'w') as json_file:
@@ -362,22 +386,62 @@ class Run_everything():
         voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
         main.setup(voltage_levels,STEPS,variable,ITERATIVES)
 
-        for voltage_level in voltage_levels:
-            if voltage_level == -0.0:
-                voltage_level =0.0
-            x = 1
-            while x <= ITERATIVES:    
-                main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
+        voltage_min = -0.1
+        voltage_max = 0.1
+        voltage_step = 0.01
+
+        x = 1
+        while x <= ITERATIVES:    
+            with nidaqmx.Task() as output_task:
+                output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
+
+                # Create a task for analog input
+                with nidaqmx.Task() as input_task:
+                    input_task.ai_channels.add_ai_voltage_chan("cDAQ1Mod2/ai0")
+
+                    # Set initial output voltage to 0V
+                    output_task.write(0)
+
+                    # Increase voltage to max
+                    for voltage in range(0, int(voltage_max * 100) + 1, int(voltage_step * 100)):
+                        voltage /= 100.0
+                        output_task.write(voltage)
+                        input_voltage = input_task.read()
+                        #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
+                        main.storing(voltage,input_voltage,x,variable)
+
+                    # Decrease voltage to min
+                    for voltage in range(int(voltage_max * 100)-1, int(voltage_min * 100) - 1, -int(voltage_step * 100)):
+                        voltage /= 100.0
+                        output_task.write(voltage)
+                        input_voltage = input_task.read()
+                        #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
+                        main.storing(voltage,input_voltage,x,variable)
+                    # Traverse back up to 0V
+                    for voltage in range(int(voltage_min * 100)+1, int(voltage_step+1), int(voltage_step * 100)):
+                        voltage /= 100.0
+                        output_task.write(voltage)
+                        input_voltage = input_task.read()
+                        #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
+                        main.storing(voltage,input_voltage,x,variable)
+                    x += 1
+
+        # for voltage_level in voltage_levels:
+        #     if voltage_level == -0.0:
+        #         voltage_level =0.0
+            # x = 1
+            # while x <= ITERATIVES:    
+            #     main.set_analog_output(analog_output_channel,voltage_level,SAMPLE_AMOUNT)
               
-                #current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-                voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
-                #main.storing(voltage_level,current_reading,x,variable)
-                        # variable = "Voltage"
-                        # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
-                main.storing(voltage_level,voltage_reading,x,variable)
+            #     #current_reading,current_time = main.read_current(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+            #     voltage_reading,voltage_time = main.read_voltage(analog_input_channel,SAMPLE_AMOUNT,SAMPLE_RATE)
+            #     #main.storing(voltage_level,current_reading,x,variable)
+            #             # variable = "Voltage"
+            #             # main.setup(voltage_levels,STEPS,variable,ITERATIVES)
+            #     main.storing(voltage_level,voltage_reading,x,variable)
                 
                         
-                x += 1
+               
         end_time = time.time()-start_time
         print("")
         print(f"Time it took to collect data: {end_time}")
