@@ -24,38 +24,71 @@ class DAQ:
         self.zeros = zeros_count+2
         return 
     
+    def create_correct_order(self,current_number):
+        pass
+
     def plotter(self,iterations):
         with open(self.actual_file, 'r') as file:
             data = json.load(file)
         x = self.start_voltage
-        
+        print(data)
         empty_dict = {}
+        area1 = []
+        area2 = []
+        area3 = []
+        area4 = []
+        # for i in data[variable]:
+        #     print(i.value())
+
+        first_number = 0
+        second_number = 1
+
         while x <= self.start_voltage_max:
             for i in range(1,iterations+1):
-                value = data[variable][str(x)][str(i)]
-                #if i == 2:
-                    #empty_dict[x] +=[v * GAIN for v in value] #TODO Account for more iteratations
-                empty_dict[x]=[v * GAIN for v in value]
-            x = round(x+self.steps,self.zeros)
+                if x>=0:
+                    area1.append(data[variable][str(x)][str(i)][first_number]*GAIN)
+                    area2.append(data[variable][str(x)][str(i)][second_number]*GAIN)
+                elif x<0:
+                    area3.append(data[variable][str(x)][str(i)][first_number]*GAIN)
+                    area4.append(data[variable][str(x)][str(i)][second_number]*GAIN)
+                x = round(x+self.steps,self.zeros)
+        
+        whole_area = area1+area2+area3+area4
 
-        keys = list(empty_dict.keys())
-        values = list(empty_dict.values())
 
-        # Flatten the values list
-        flattened_values = [item for sublist in values for item in sublist]
-        x_coords = []
-        for key, val in empty_dict.items():
-            x_coords.extend([key] * len(val))
 
-        x_coords = np.array(x_coords) # Voltage input
-        flattened_values = np.array(flattened_values) #Voltage measured
-        junction_current = flattened_values
+
+
+        #         #if i == 2:
+        #             #empty_dict[x] +=[v * GAIN for v in value] #TODO Account for more iteratations
+        #         empty_dict[x]=[v * GAIN for v in value]
+        #     x = round(x+self.steps,self.zeros)
+        
+
+        # keys = list(empty_dict.keys())
+        # values = list(empty_dict.values())
+
+        # # Flatten the values list
+        # flattened_values = [item for sublist in values for item in sublist]
+        # x_coords = []
+        # for key, val in empty_dict.items():
+        #     x_coords.extend([key] * len(val))
+
+        y_coords = np.array(whole_area) # Voltage input
+        x_coords = np.linspace(self.start_voltage,self.start_voltage_max,len(whole_area))
+        
+
+        # flattened_values = np.array(flattened_values) #Voltage measured
+        # junction_current = flattened_values
+
         # Calculate G/G_0 values
         # G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
         # print(G_G0_values)
-        slope, intercept = np.polyfit(x_coords, junction_current, 1)
+
+
+        slope, intercept = np.polyfit(x_coords, y_coords, 1)
         y_fit = slope * np.array(x_coords) + intercept
-        plt.scatter(x_coords, junction_current, marker='o',facecolors="none" ,edgecolors='b')
+        plt.scatter(x_coords, y_coords, marker='o',facecolors="none" ,edgecolors='b')
         plt.plot(x_coords, y_fit, color='r', label='Line of Best Fit')
         plt.xlabel('Voltage')
         plt.ylabel('Current')
@@ -84,7 +117,7 @@ class DAQ:
         self.steps = steps        
         file_path =r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
         voltage_min = min(interval)
-        start_voltage = 0.0
+        start_voltage = voltage_min
         self.start_voltage = start_voltage
         voltage_max = max(interval)
         self.start_voltage_max = voltage_max
@@ -106,33 +139,33 @@ class DAQ:
             data[variable][round(start_voltage,self.zeros)] = {}
             x = 1
             while x <= iterations:
-                data[variable][round(start_voltage,self.zeros)][x] = ""
+                data[variable][round(start_voltage,self.zeros)][x] = []
 
                 x += 1
 
             start_voltage = round(start_voltage + steps,self.zeros)
-        #### Take care of number going from max to min ####
-        tart_voltage = round(start_voltage - steps,self.zeros)
-        while start_voltage>= voltage_min:
-            data[variable][round(start_voltage,self.zeros)] = {}
-            x = 1
-            while x <= iterations:
-                data[variable][round(start_voltage,self.zeros)][x] = ""
+        # #### Take care of number going from max to min ####
+        # tart_voltage = round(start_voltage - steps,self.zeros)
+        # while start_voltage>= voltage_min:
+        #     data[variable][round(start_voltage,self.zeros)] = {}
+        #     x = 1
+        #     while x <= iterations:
+        #         data[variable][round(start_voltage,self.zeros)][x] = []
 
-                x += 1
+        #         x += 1
 
-            start_voltage = round(start_voltage - steps,self.zeros)
+        #     start_voltage = round(start_voltage - steps,self.zeros)
 
-        #### Take care of number going from min to start #### 
-        while start_voltage<=0:
-            data[variable][round(start_voltage,self.zeros)] = {}
-            x = 1
-            while x <= iterations:
-                data[variable][round(start_voltage,self.zeros)][x] = ""
+        # #### Take care of number going from min to start #### 
+        # while start_voltage<=0:
+        #     data[variable][round(start_voltage,self.zeros)] = {}
+        #     x = 1
+        #     while x <= iterations:
+        #         data[variable][round(start_voltage,self.zeros)][x] = ""
 
-                x += 1
+        #         x += 1
 
-            start_voltage = round(start_voltage + steps,self.zeros)
+        #     start_voltage = round(start_voltage + steps,self.zeros)
 
 
 
@@ -181,14 +214,19 @@ class DAQ:
         variable = str(variable)
         with open(self.actual_file,'r') as json_file:
             data = json.load(json_file)
-        data[variable][str(round(current_voltage,self.zeros))][str(iteration)] = collected_data
+        try:#If there is already a value in the measured values list
+            data[variable][str(round(current_voltage,self.zeros))][str(iteration)][0]
+            data[variable][str(round(current_voltage,self.zeros))][str(iteration)][[1]] = collected_data
+        except:#If there is not already a value in the measured values list
+            data[variable][str(round(current_voltage,self.zeros))][str(iteration)].append(collected_data)
+
         # while self.start_voltage <=self.start_voltage_max:
         #     x = 1
         #     while x <= iterations:
         #         data[str(round(self.start_voltage,2))][str(x)] = collected_data
 
         #         x += 1
-
+        
         #     self.start_voltage = round(self.start_voltage + self.steps,2)
 
         with open(self.actual_file,'w') as json_file:
@@ -411,14 +449,14 @@ class Run_everything():
                         main.storing(voltage,input_voltage,x,variable)
 
                     # Decrease voltage to min
-                    for voltage in range(int(voltage_max * 100)-1, int(voltage_min * 100) - 1, -int(voltage_step * 100)):
+                    for voltage in range(int(voltage_max * 100), int(voltage_min * 100) - 1, -int(voltage_step * 100)):
                         voltage /= 100.0
                         output_task.write(voltage)
                         input_voltage = input_task.read()
                         #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
                         main.storing(voltage,input_voltage,x,variable)
                     # Traverse back up to 0V
-                    for voltage in range(int(voltage_min * 100)+1, int(voltage_step+1), int(voltage_step * 100)):
+                    for voltage in range(int(voltage_min * 100), int(voltage_step), int(voltage_step * 100)):
                         voltage /= 100.0
                         output_task.write(voltage)
                         input_voltage = input_task.read()

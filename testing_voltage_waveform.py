@@ -48,7 +48,7 @@
 
 #     task.write(waveform, auto_start=True)
 #     task.wait_until_done(timeout=100)
-1e-9
+
 import nidaqmx
 
 # Define voltage range and step size
