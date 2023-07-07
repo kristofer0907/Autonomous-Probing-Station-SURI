@@ -86,7 +86,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import nidaqmx
-
+GAIN = 1e-9
 # Prompt the user to enter the desired voltage level and measurement time
 desired_voltage = float(input("Enter the desired voltage level in volts: "))
 desired_time = float(input("Enter the desired measurement time in seconds: "))
@@ -119,7 +119,7 @@ current_data = [GAIN*voltage for voltage in voltage_data]
 time = np.linspace(0, desired_time, len(current_data))
 
 # Plot the current measurements over time
-plt.plot(time, current_data)
+plt.scatter(time, current_data)
 plt.xlabel('Time (s)')
 plt.ylabel('Current (A)')
 plt.title('Current vs. Time')

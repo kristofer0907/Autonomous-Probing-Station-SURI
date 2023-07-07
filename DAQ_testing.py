@@ -27,19 +27,18 @@ class DAQ:
     def create_correct_order(self,current_number):
         pass
 
-    def plotter(self,iterations):
+    def plotter(self,iterations,interval):
         with open(self.actual_file, 'r') as file:
             data = json.load(file)
         x = self.start_voltage
-        print(data)
-        empty_dict = {}
         area1 = []
         area2 = []
         area3 = []
         area4 = []
+       
+
         # for i in data[variable]:
         #     print(i.value())
-
         first_number = 0
         second_number = 1
 
@@ -53,9 +52,37 @@ class DAQ:
                     area4.append(data[variable][str(x)][str(i)][second_number]*GAIN)
                 x = round(x+self.steps,self.zeros)
         
-        whole_area = area1+area2+area3+area4
 
+        
+        area2.reverse()
+        area3.reverse()
 
+        main_interval = np.array(interval)
+
+        min_value = np.min(main_interval)
+        max_value = np.max(main_interval)
+
+        # Split the main interval into two sub-intervals
+        interval4 = list(main_interval[main_interval <= 0])
+        interval1 = list(main_interval[main_interval >= 0])
+        interval4 = interval4[:-1]
+        interval3 = interval4[::-1]
+        interval2 = interval1[::-1]
+        #interval3 = interval3[1:]        
+        # interval1 =  [0.0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]
+        # interval2= [0.1,0.09,0.08,0.07,0.06,0.05,0.04,0.03,0.02,0.01,0.0]
+        # interval3= [-0.01,-0.02,-0.03,-0.04,-0.05,-0.06,-0.07,-0.08,-0.09,-0.1]
+        # interval4= [-0.1,-0.09,-0.08,-0.07,-0.06,-0.05,-0.04,-0.03,-0.02,-0.01]
+        plt.scatter(interval1,area1,label ="Area 1",marker="o") 
+        plt.scatter(interval2,area2,label ="Area 2",marker="x")
+        plt.scatter(interval3,area3,label ="Area 3",marker="o")
+        plt.scatter(interval4,area4,label ="Area 4",marker="x")
+        plt.xlabel('Voltage')
+        plt.ylabel('Current')
+        plt.title('I-V Plot')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
 
 
@@ -74,27 +101,27 @@ class DAQ:
         # for key, val in empty_dict.items():
         #     x_coords.extend([key] * len(val))
 
-        y_coords = np.array(whole_area) # Voltage input
-        x_coords = np.linspace(self.start_voltage,self.start_voltage_max,len(whole_area))
+        # y_coords = np.array(whole_area) # Voltage input
+        # x_coords = np.linspace(self.start_voltage,self.start_voltage_max,len(whole_area))
         
 
-        # flattened_values = np.array(flattened_values) #Voltage measured
-        # junction_current = flattened_values
+        # # flattened_values = np.array(flattened_values) #Voltage measured
+        # # junction_current = flattened_values
 
-        # Calculate G/G_0 values
-        # G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
-        # print(G_G0_values)
+        # # Calculate G/G_0 values
+        # # G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
+        # # print(G_G0_values)
 
 
-        slope, intercept = np.polyfit(x_coords, y_coords, 1)
-        y_fit = slope * np.array(x_coords) + intercept
-        plt.scatter(x_coords, y_coords, marker='o',facecolors="none" ,edgecolors='b')
-        plt.plot(x_coords, y_fit, color='r', label='Line of Best Fit')
-        plt.xlabel('Voltage')
-        plt.ylabel('Current')
-        plt.title('I-V Plot')
-        plt.grid(True)
-        plt.show()
+        # slope, intercept = np.polyfit(x_coords, y_coords, 1)
+        # y_fit = slope * np.array(x_coords) + intercept
+        # plt.scatter(x_coords, y_coords, marker='o',facecolors="none" ,edgecolors='b')
+        # plt.plot(x_coords, y_fit, color='r', label='Line of Best Fit')
+        # plt.xlabel('Voltage')
+        # plt.ylabel('Current')
+        # plt.title('I-V Plot')
+        # plt.grid(True)
+        # plt.show()
     
 
     def create_interval(self,start, end, step):
@@ -423,10 +450,10 @@ class Run_everything():
         main.count_zeros_in_float(VOLTAGE_MIN)
         voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
         main.setup(voltage_levels,STEPS,variable,ITERATIVES)
-
-        voltage_min = -0.1
-        voltage_max = 0.1
-        voltage_step = 0.01
+        
+        voltage_min = VOLTAGE_MIN
+        voltage_max = VOLTAGE_MAX
+        voltage_step = STEPS
 
         x = 1
         while x <= ITERATIVES:    
@@ -484,7 +511,7 @@ class Run_everything():
         print("")
         print(f"Time it took to collect data: {end_time}")
         print("")
-        main.plotter(ITERATIVES)
+        main.plotter(ITERATIVES,voltage_levels)
         self.user_interface.ending()
         
 
