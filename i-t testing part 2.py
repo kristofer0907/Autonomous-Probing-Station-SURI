@@ -80,12 +80,10 @@
 # plt.title('Current vs. Time')
 # plt.grid(True)
 # plt.show()
-
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 import nidaqmx
+
 GAIN = 1e-9
 # Prompt the user to enter the desired voltage level and measurement time
 desired_voltage = float(input("Enter the desired voltage level in volts: "))
@@ -113,15 +111,23 @@ with nidaqmx.Task() as output_task:
         voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
 
 # Calculate the current from the voltage data
-current_data = [GAIN*voltage for voltage in voltage_data]
+current_data = [GAIN * voltage for voltage in voltage_data]
 
 # Generate the time axis for the plot
-time = np.linspace(0, desired_time, len(current_data))
+# Generate the time axis for the plot
+time = np.linspace(0, (num_samples-1) / sample_rate, num_samples)
 
-# Plot the current measurements over time
-plt.scatter(time, current_data)
+
+# Perform linear fit using numpy polyfit
+fit_coeffs = np.polyfit(time, current_data, 1)  # Fit a line (degree 1 polynomial)
+fit_line = np.polyval(fit_coeffs, time)  # Generate the fitted line values
+
+# Plot the current measurements over time and the linear fit line
+plt.plot(time, current_data, label='Data')
+plt.plot(time, fit_line, label='Linear Fit')
 plt.xlabel('Time (s)')
 plt.ylabel('Current (A)')
 plt.title('Current vs. Time')
+plt.legend()
 plt.grid(True)
 plt.show()

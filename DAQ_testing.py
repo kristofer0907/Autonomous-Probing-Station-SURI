@@ -368,7 +368,12 @@ class UI:
         verify_input_channel = DAQ().verify("channel input",analog_input_channel)
         if verify_input_channel == False:
             print("The name given for the analog input is incorrect, try again")
-            self.get_info_for_DAQ()
+            self.get_info_i_t()
+        analog_output_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+        verify_output_channel = DAQ().verify("channel output",analog_output_channel)
+        if verify_input_channel == False:
+            print("The name given for the analog ouutput is incorrect, try again")
+            self.get_info_i_t()
         file_name = input("Filename: ") 
         file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
         file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
@@ -376,7 +381,7 @@ class UI:
         desired_voltage = float(input("Enter the desired voltage level in volts: "))
         desired_time = float(input("Enter the desired measurement time in seconds: "))
         num_samples = int(input("Enter the number of samples to acquire: "))
-
+        GAIN = float(input("Gain: "))
         print("Would you like to continue(yes/no)?")
         selection = input("Input: ")
         if selection == "yes":
@@ -386,7 +391,7 @@ class UI:
             #self.get_info_for_DAQ()
         else:
             print("Please enter either yes or no")
-        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel
+        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel,analog_output_channel,GAIN
     def ending(self):
         print("Data has been sucessfully collected, select one of the following options: ")
         print(" 1. Run again with same constraints and conditions")
@@ -516,7 +521,7 @@ class Run_everything():
         
 
     def something(self):
-        desired_voltage,desired_time,num_samples,analog_output,analog_input= self.user_interface.get_info_i_t()
+        desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN=  self.user_interface.get_info_i_t()
         with nidaqmx.Task() as output_task:
             # Add an analog output voltage channel
             output_task.ao_channels.add_ao_voltage_chan(analog_output)  # Replace with your channel name
@@ -537,10 +542,10 @@ class Run_everything():
                 voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
 
         # Calculate the current from the voltage data
-        current_data = [10 * voltage for voltage in voltage_data]
+        current_data = [GAIN * voltage for voltage in voltage_data]
 
         # Generate the time axis for the plot
-        time = np.linspace(0, desired_time, len(current_data))
+        time = np.linspace(0, (num_samples-1) / sample_rate, num_samples)
 
         # Plot the current measurements over time
         plt.plot(time, current_data)
