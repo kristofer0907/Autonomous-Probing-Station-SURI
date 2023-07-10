@@ -369,9 +369,9 @@ class UI:
         if verify_input_channel == False:
             print("The name given for the analog input is incorrect, try again")
             self.get_info_i_t()
-        analog_output_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
+        analog_output_channel = input("Analog output channel: ")  # Replace with the appropriate channel name for your setup
         verify_output_channel = DAQ().verify("channel output",analog_output_channel)
-        if verify_input_channel == False:
+        if verify_output_channel == False:
             print("The name given for the analog ouutput is incorrect, try again")
             self.get_info_i_t()
         file_name = input("Filename: ") 
@@ -554,7 +554,8 @@ class Run_everything():
         plt.title('Current vs. Time')
         plt.grid(True)
         plt.show()
-
+        self.user_interface.ending()
+        
 
 boolean = False
 UI().start()
