@@ -85,19 +85,19 @@ import numpy as np
 import nidaqmx
 import json
 GAIN = 1e-9
-desired_voltage = float(input("Enter the desired voltage level in volts: "))
-desired_time = float(input("Enter the desired measurement time in seconds: "))
-num_samples = int(input("Enter the number of samples to acquire: "))
+# desired_voltage = float(input("Enter the desired voltage level in volts: "))
+# desired_time = float(input("Enter the desired measurement time in seconds: "))
+# num_samples = int(input("Enter the number of samples to acquire: "))
 
 
 
 ## Setup file ###
-# data = {}
+data = {}
    
-# data["I-t data"] = []
-# with open("testing30.json",'w') as json_file:
-#     json.dump(data,json_file,indent = 4)
-# # Setup file ###
+data["I-t data"] = []
+with open("testing31.json",'w') as json_file:
+    json.dump(data,json_file,indent = 4)
+# Setup file ###
 
 
 
@@ -128,29 +128,29 @@ def write_json(new_data, filename='testing30.json'):
 
 
 
-for number in range(1, 5):
-    data = {}
+# for number in range(1, 5):
+#     data = {}
 
-    with nidaqmx.Task() as output_task:
-        output_task.ao_channels.add_ao_voltage_chan("CDAQ1Mod1/ao0")  # Replace with your channel name
+#     with nidaqmx.Task() as output_task:
+#         output_task.ao_channels.add_ao_voltage_chan("CDAQ1Mod1/ao0")  # Replace with your channel name
 
-        output_task.write(desired_voltage)
+#         output_task.write(desired_voltage)
 
-        with nidaqmx.Task() as input_task:
-            input_task.ai_channels.add_ai_voltage_chan("CDAQ1Mod2/ai0")  # Replace with your channel name
+#         with nidaqmx.Task() as input_task:
+#             input_task.ai_channels.add_ai_voltage_chan("CDAQ1Mod2/ai0")  # Replace with your channel name
 
-            sample_rate = num_samples / desired_time  # Set the sample rate based on the desired time and number of samples
-            input_task.timing.cfg_samp_clk_timing(rate=sample_rate, samps_per_chan=num_samples)
+#             sample_rate = num_samples / desired_time  # Set the sample rate based on the desired time and number of samples
+#             input_task.timing.cfg_samp_clk_timing(rate=sample_rate, samps_per_chan=num_samples)
 
-            voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
+#             voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
 
-    current_data = [GAIN * voltage for voltage in voltage_data]
+#     current_data = [GAIN * voltage for voltage in voltage_data]
 
-    time = np.linspace(0, (num_samples - 1) / sample_rate, num_samples)
-    number_pair = f"Pair number: {number}"
-    res = dict(zip(np.round(time, 1), current_data))
-    data[number_pair] = res
-    write_json(data)
+#     time = np.linspace(0, (num_samples - 1) / sample_rate, num_samples)
+#     number_pair = f"Pair number: {number}"
+#     res = dict(zip(np.round(time, 1), current_data))
+#     data[number_pair] = res
+#     write_json(data)
 
 
 

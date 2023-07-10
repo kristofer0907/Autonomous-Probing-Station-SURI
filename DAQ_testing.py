@@ -279,7 +279,29 @@ class DAQ:
             
         elif string == "number":
             pass
-     
+    def write_json(self,new_data, filename,boolean):
+        if boolean == False:
+            data = {}
+            
+            data["I-t data"] = []
+            with open(filename,'w') as json_file:
+                json.dump(data,json_file,indent = 4)
+            boolean = True
+            return
+          
+        elif boolean == True:
+            with open(filename,'r+') as file:
+            # First we load existing data into a dict.
+                file_data = json.load(file)
+
+                # Join new_data with file_data inside emp_details
+                file_data["I-t data"].append(new_data)
+                # Sets file's current position at offset.
+                file.seek(0)
+                # convert back to json.
+                json.dump(file_data, file, indent = 4)
+    
+    # python object to be appended
 
 ############## INPUTS ############## 
 
@@ -522,30 +544,37 @@ class Run_everything():
 
     def something(self):
         desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN=  self.user_interface.get_info_i_t()
-        with nidaqmx.Task() as output_task:
-            # Add an analog output voltage channel
-            output_task.ao_channels.add_ao_voltage_chan(analog_output)  # Replace with your channel name
+        boolean = False
+        main = DAQ()
+        main.write_json({},file_name,boolean)
 
-            # Configure the desired voltage level
-            output_task.write(desired_voltage)
 
-            # Create a task for analog input
-            with nidaqmx.Task() as input_task:
-                # Add an analog input voltage channel
-                input_task.ai_channels.add_ai_voltage_chan(analog_input)  # Replace with your channel name
+        
+        for number in range(1, 5):
+            data = {}
 
-                # Configure timing settings
-                sample_rate = num_samples / desired_time  # Set the sample rate based on the desired time and number of samples
-                input_task.timing.cfg_samp_clk_timing(rate=sample_rate, samps_per_chan=num_samples)
+            with nidaqmx.Task() as output_task:
+                output_task.ao_channels.add_ao_voltage_chan(analog_output)  # Replace with your channel name
 
-                # Read the voltage data
-                voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
+                output_task.write(desired_voltage)
 
-        # Calculate the current from the voltage data
-        current_data = [GAIN * voltage for voltage in voltage_data]
+                with nidaqmx.Task() as input_task:
+                    input_task.ai_channels.add_ai_voltage_chan(analog_input)  # Replace with your channel name
 
-        # Generate the time axis for the plot
-        time = np.linspace(0, (num_samples-1) / sample_rate, num_samples)
+                    sample_rate = num_samples / desired_time  # Set the sample rate based on the desired time and number of samples
+                    input_task.timing.cfg_samp_clk_timing(rate=sample_rate, samps_per_chan=num_samples)
+
+                    voltage_data = input_task.read(number_of_samples_per_channel=num_samples, timeout=float("1000"))
+
+            current_data = [GAIN * voltage for voltage in voltage_data]
+
+            time = np.linspace(0, (num_samples - 1) / sample_rate, num_samples)
+            number_pair = f"Pair number: {number}"
+            res = dict(zip(np.round(time, 1), current_data))
+            data[number_pair] = res
+            main.write_json(data,file_name,boolean=True)
+
+
 
         # Plot the current measurements over time
         plt.plot(time, current_data)
