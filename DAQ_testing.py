@@ -348,16 +348,22 @@ class UI:
             # easily possible to make the user start over again
 
     def get_info_for_DAQ(self):
-        analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
-        verify_input_channel = DAQ().verify("channel input",analog_input_channel)
-        if verify_input_channel == False:
-            print("The name given for the analog input is incorrect, try again")
-            self.get_info_for_DAQ()
-        analog_output_channel = input("Analog output channel: ")
-        verify_output_channel = DAQ().verify("channel output",analog_output_channel)
-        if verify_output_channel ==False:    
-            print("The name given for the analog output is incorrect, try again")
-            self.get_info_for_DAQ()
+        while True:
+            analog_input_channel = input("Analog input channel: ")
+            verify_input_channel = DAQ().verify("channel input", analog_input_channel)
+            if verify_input_channel:
+                break
+            else:
+                print("The name given for the analog input is incorrect, try again")
+
+        while True:
+            analog_output_channel = input("Analog output channel: ")
+            verify_output_channel = DAQ().verify("channel output", analog_output_channel)
+            if verify_output_channel:
+                break
+            else:
+                print("The name given for the analog output is incorrect, try again")
+
         file_name = input("Filename: ") 
         file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
         file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
@@ -386,20 +392,26 @@ class UI:
 
     
     def get_info_i_t(self):
-        analog_input_channel = input("Analog input channel: ")  # Replace with the appropriate channel name for your setup
-        verify_input_channel = DAQ().verify("channel input",analog_input_channel)
-        if verify_input_channel == False:
-            print("The name given for the analog input is incorrect, try again")
-            self.get_info_i_t()
-        analog_output_channel = input("Analog output channel: ")  # Replace with the appropriate channel name for your setup
-        verify_output_channel = DAQ().verify("channel output",analog_output_channel)
-        if verify_output_channel == False:
-            print("The name given for the analog ouutput is incorrect, try again")
-            self.get_info_i_t()
+        while True:
+            analog_input_channel = input("Analog input channel: ")
+            verify_input_channel = DAQ().verify("channel input", analog_input_channel)
+            if verify_input_channel:
+                break
+            else:
+                print("The name given for the analog input is incorrect, try again")
+
+        while True:
+            analog_output_channel = input("Analog output channel: ")
+            verify_output_channel = DAQ().verify("channel output", analog_output_channel)
+            if verify_output_channel:
+                break
+            else:
+                print("The name given for the analog output is incorrect, try again")
+
         file_name = input("Filename: ") 
         file_name = file_name+".json"# User should select the filename, said filename will be used in the future for 
         file_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
-       
+        pairs_of_devices = int(input("Enter the amount of pairs of devices on the chip: "))
         desired_voltage = float(input("Enter the desired voltage level in volts: "))
         desired_time = float(input("Enter the desired measurement time in seconds: "))
         num_samples = int(input("Enter the number of samples to acquire: "))
@@ -413,7 +425,7 @@ class UI:
             #self.get_info_for_DAQ()
         else:
             print("Please enter either yes or no")
-        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel,analog_output_channel,GAIN
+        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel,analog_output_channel,GAIN,pairs_of_devices
     def ending(self):
         print("Data has been sucessfully collected, select one of the following options: ")
         print(" 1. Run again with same constraints and conditions")
@@ -543,14 +555,14 @@ class Run_everything():
         
 
     def something(self):
-        desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN=  self.user_interface.get_info_i_t()
+        desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices=  self.user_interface.get_info_i_t()
         boolean = False
         main = DAQ()
         main.write_json({},file_name,boolean)
 
 
         
-        for number in range(1, 5):
+        for number in range(1, pairs_devices+1):
             data = {}
 
             with nidaqmx.Task() as output_task:
@@ -574,16 +586,16 @@ class Run_everything():
             data[number_pair] = res
             main.write_json(data,file_name,boolean=True)
 
-
+            plt.plot(time, current_data)
+            plt.xlabel('Time (s)')
+            plt.ylabel('Current (A)')
+            plt.title(f'Current vs. Time pair number {pairs_devices}')
+            plt.grid(True)
+            plt.show()
+        self.user_interface.ending()
 
         # Plot the current measurements over time
-        plt.plot(time, current_data)
-        plt.xlabel('Time (s)')
-        plt.ylabel('Current (A)')
-        plt.title('Current vs. Time')
-        plt.grid(True)
-        plt.show()
-        self.user_interface.ending()
+       
         
 
 boolean = False
