@@ -86,42 +86,6 @@ class DAQ:
 
 
 
-        #         #if i == 2:
-        #             #empty_dict[x] +=[v * GAIN for v in value] #TODO Account for more iteratations
-        #         empty_dict[x]=[v * GAIN for v in value]
-        #     x = round(x+self.steps,self.zeros)
-        
-
-        # keys = list(empty_dict.keys())
-        # values = list(empty_dict.values())
-
-        # # Flatten the values list
-        # flattened_values = [item for sublist in values for item in sublist]
-        # x_coords = []
-        # for key, val in empty_dict.items():
-        #     x_coords.extend([key] * len(val))
-
-        # y_coords = np.array(whole_area) # Voltage input
-        # x_coords = np.linspace(self.start_voltage,self.start_voltage_max,len(whole_area))
-        
-
-        # # flattened_values = np.array(flattened_values) #Voltage measured
-        # # junction_current = flattened_values
-
-        # # Calculate G/G_0 values
-        # # G_G0_values = flattened_values[0] / x_coords[0] / (7.77e-5)
-        # # print(G_G0_values)
-
-
-        # slope, intercept = np.polyfit(x_coords, y_coords, 1)
-        # y_fit = slope * np.array(x_coords) + intercept
-        # plt.scatter(x_coords, y_coords, marker='o',facecolors="none" ,edgecolors='b')
-        # plt.plot(x_coords, y_fit, color='r', label='Line of Best Fit')
-        # plt.xlabel('Voltage')
-        # plt.ylabel('Current')
-        # plt.title('I-V Plot')
-        # plt.grid(True)
-        # plt.show()
     
 
     def create_interval(self,start, end, step):
@@ -148,7 +112,6 @@ class DAQ:
         self.start_voltage = start_voltage
         voltage_max = max(interval)
         self.start_voltage_max = voltage_max
-        #variable = str(variable)
         
         ############SETUP############
        
@@ -158,22 +121,12 @@ class DAQ:
         self.actual_file = actual_file
 
         data = {}
-       
+        data[variable] = []
+        with open(actual_file,'w') as json_file:
+            json.dump(data,json_file,indent = 4)
 
-        data[variable] = {}
         #### Take care of number going from start to max ####
-        while start_voltage <=voltage_max:
-            data[variable][round(start_voltage,self.zeros)] = {}
-            x = 1
-            while x <= iterations:
-                data[variable][round(start_voltage,self.zeros)][x] = []
-
-                x += 1
-
-            start_voltage = round(start_voltage + steps,self.zeros)
-        # #### Take care of number going from max to min ####
-        # tart_voltage = round(start_voltage - steps,self.zeros)
-        # while start_voltage>= voltage_min:
+        # while start_voltage <=voltage_max:
         #     data[variable][round(start_voltage,self.zeros)] = {}
         #     x = 1
         #     while x <= iterations:
@@ -181,23 +134,9 @@ class DAQ:
 
         #         x += 1
 
-        #     start_voltage = round(start_voltage - steps,self.zeros)
-
-        # #### Take care of number going from min to start #### 
-        # while start_voltage<=0:
-        #     data[variable][round(start_voltage,self.zeros)] = {}
-        #     x = 1
-        #     while x <= iterations:
-        #         data[variable][round(start_voltage,self.zeros)][x] = ""
-
-        #         x += 1
-
         #     start_voltage = round(start_voltage + steps,self.zeros)
+        
 
-
-
-        with open(actual_file,'w') as json_file:
-            json.dump(data,json_file,indent = 4)
 
     def set_analog_output(self,analog_input_channel,voltage_level,num_samples):
         with nidaqmx.Task() as task:
@@ -305,7 +244,7 @@ class DAQ:
 
 ############## INPUTS ############## 
 
-variable = "Current"
+variable = "I-V data"
 ############## UI ############## 
 print('WELCOME TO THE AUTO-PROBER2023, please select one of the following options: ')
 
@@ -494,8 +433,9 @@ class Run_everything():
         voltage_min = VOLTAGE_MIN
         voltage_max = VOLTAGE_MAX
         voltage_step = STEPS
-
-
+        input_voltage_list = []
+        output_voltage_list = []
+        data = dict()
         x = 1
         while x <= ITERATIVES:    
             with nidaqmx.Task() as output_task:
@@ -513,31 +453,64 @@ class Run_everything():
                         voltage /= 100.0
                         output_task.write(voltage)
                         input_voltage = input_task.read()
-                        #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
-                        main.storing(voltage,input_voltage,x,variable)
+                        input_voltage_list.append(input_voltage)
+                        output_voltage_list.append(voltage)
+                        #main.storing(voltage,input_voltage,x,variable)
 
                     # Decrease voltage to min
                     for voltage in range(int(voltage_max * 100), int(voltage_min * 100) - 1, -int(voltage_step * 100)):
                         voltage /= 100.0
                         output_task.write(voltage)
                         input_voltage = input_task.read()
-                        #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
-                        main.storing(voltage,input_voltage,x,variable)
+                        input_voltage_list.append(input_voltage)
+                        output_voltage_list.append(voltage)
+                        #main.storing(voltage,input_voltage,x,variable)
                     # Traverse back up to 0V
                     for voltage in range(int(voltage_min * 100), int(voltage_step), int(voltage_step * 100)):
                         voltage /= 100.0
                         output_task.write(voltage)
                         input_voltage = input_task.read()
-                        #print(f"Output Voltage: {voltage}V | Input Voltage: {input_voltage}V")
-                        main.storing(voltage,input_voltage,x,variable)
+                        input_voltage_list.append(input_voltage)
+                        output_voltage_list.append(voltage)
+                        #main.storing(voltage,input_voltage,x,variable)
                     x += 1
-  
-               
+            number = 1
+            number_pair = f"Pair number: {number}"
+            input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
+            #res = dict(zip(output_voltage_list,input_voltage_list))
+            # if number_pair not in data:
+            #     data[number_pair] = {}
+            # else:
+            #     data[number_pair][x] = res
+            
+            # new_data = data
+            # with open(file_name,'r+') as file:
+            #     # First we load existing data into a dict.
+            #     file_data = json.load(file)
+
+            #     # Join new_data with file_data inside emp_details
+            #     file_data[variable].append(new_data)
+            #     # Sets file's current position at offset.
+            #     file.seek(0)
+            #     # convert back to json.
+            #     json.dump(file_data, file, indent = 4)
+
+
+            plt.scatter(output_voltage_list,input_voltage_list,label ="Area 1",marker="o") 
+            plt.xlabel('Voltage')
+            plt.ylabel('Current')
+            plt.title('I-V Plot')
+            plt.legend()
+            plt.grid(True)
+            plt.show()
+
+
+
             end_time = time.time()-start_time
             print("")
             print(f"Time it took to collect data: {end_time}")
             print("")
-            main.plotter(ITERATIVES,voltage_levels)
+            #main.plotter(ITERATIVES,voltage_levels)
         self.user_interface.ending()
         
 
