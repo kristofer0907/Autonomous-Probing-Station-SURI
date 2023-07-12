@@ -436,7 +436,10 @@ class Run_everything():
         input_voltage_list = []
         output_voltage_list = []
         data = dict()
+        #data[variable] = {}
         x = 1
+        number = 1
+        number_pair = f"Pair number: {number}"
         while x <= ITERATIVES:    
             with nidaqmx.Task() as output_task:
                 output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
@@ -473,43 +476,46 @@ class Run_everything():
                         input_voltage_list.append(input_voltage)
                         output_voltage_list.append(voltage)
                         #main.storing(voltage,input_voltage,x,variable)
+                    
+                    input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
+                    data[number_pair]={x:{"output": output_voltage_list, "input": input_voltage_list}}
                     x += 1
-            number = 1
-            number_pair = f"Pair number: {number}"
-            input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
+                    new_data = data
+                    with open(file_name,'r+') as file:
+                        # First we load existing data into a dict.
+                        file_data = json.load(file)
+
+                        # Join new_data with file_data inside emp_details
+                        file_data[variable].append(new_data)
+                        # Sets file's current position at offset.
+                        file.seek(0)
+                        # convert back to json.
+                        json.dump(file_data, file, indent = 4)
+
+                    plt.scatter(output_voltage_list,input_voltage_list,label ="Area 1",marker="o") 
+                    plt.xlabel('Voltage')
+                    plt.ylabel('Current')
+                    plt.title('I-V Plot')
+                    plt.legend()
+                    plt.grid(True)
+                    plt.show()
+
+        number +=1 
             #res = dict(zip(output_voltage_list,input_voltage_list))
             # if number_pair not in data:
             #     data[number_pair] = {}
             # else:
             #     data[number_pair][x] = res
+                    
+
+        end_time = time.time()-start_time
+        print("")
+        print(f"Time it took to collect data: {end_time}")
+        print("")
             
-            # new_data = data
-            # with open(file_name,'r+') as file:
-            #     # First we load existing data into a dict.
-            #     file_data = json.load(file)
-
-            #     # Join new_data with file_data inside emp_details
-            #     file_data[variable].append(new_data)
-            #     # Sets file's current position at offset.
-            #     file.seek(0)
-            #     # convert back to json.
-            #     json.dump(file_data, file, indent = 4)
 
 
-            plt.scatter(output_voltage_list,input_voltage_list,label ="Area 1",marker="o") 
-            plt.xlabel('Voltage')
-            plt.ylabel('Current')
-            plt.title('I-V Plot')
-            plt.legend()
-            plt.grid(True)
-            plt.show()
-
-
-
-            end_time = time.time()-start_time
-            print("")
-            print(f"Time it took to collect data: {end_time}")
-            print("")
+            
             #main.plotter(ITERATIVES,voltage_levels)
         self.user_interface.ending()
         
