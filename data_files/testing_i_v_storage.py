@@ -433,15 +433,22 @@ class Run_everything():
         voltage_min = VOLTAGE_MIN
         voltage_max = VOLTAGE_MAX
         voltage_step = STEPS
-        input_voltage_list = []
-        output_voltage_list = []
+        
         data = dict()
         #data[variable] = {}
         x = 1
         number = 1
         number_pair = f"Pair number: {number}"
         file_name = file_path+file_name
-        while x <= ITERATIVES:    
+        plt.ion()
+
+        # Creating subplot and figure
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        scatter = None
+        while x <= ITERATIVES:  
+            input_voltage_list = []
+            output_voltage_list = []
             with nidaqmx.Task() as output_task:
                 output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
 
@@ -477,31 +484,53 @@ class Run_everything():
                         input_voltage_list.append(input_voltage)
                         output_voltage_list.append(voltage)
                         #main.storing(voltage,input_voltage,x,variable)
-                    
                     input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
                     data[number_pair]={x:{"output": output_voltage_list, "input": input_voltage_list}}
-                    
-                    new_data = data
-                  
-                   
-                    plt.scatter(output_voltage_list,input_voltage_list,label =f"iterative: {x}") 
+                                    
+                    if x == 1:
+                        # Create scatter plot for the first iteration
+                        scatter = ax.scatter(output_voltage_list, input_voltage_list, label=f"Iteration {x}")
+                        plt.xlabel('Voltage')
+                        plt.ylabel('Current')
+                        plt.title(f'I-V for Pair number {number_pair}')
+                        plt.legend()
+                        plt.grid(True)
+                        plt.show()
 
-                    slope, intercept = np.polyfit(output_voltage_list, input_voltage_list, 1)
+                    else:
+                        # Update the data of the scatter plot
+                        scatter.set_offsets(np.column_stack((output_voltage_list, input_voltage_list)))
+                        
 
-                    # Generate the line using the slope and intercept
-                    line = slope * np.array(output_voltage_list) + intercept
+                    color = plt.cm.viridis(x / ITERATIVES)
+                    scatter.set_facecolor(color)
 
-                    # Plot the linear fit line
-                    plt.plot(output_voltage_list, line, label="Linear Fit", color="red")
-                    
+                    # Add a legend entry for the current iteration
+                    scatter.set_label(f"Iteration {x+1}")
 
-                    plt.xlabel('Voltage')
-                    plt.ylabel('Current')
-                    plt.title(f'I-V for Pair number {number_pair}')
-                    plt.legend()
-                    plt.grid(True)
-                    plt.show()
+                    # Redraw the figure and pause
+                    fig.canvas.draw()
+                    fig.canvas.flush_events()
+                    time.sleep(0.1)
                     x += 1
+                    new_data = data
+
+
+                   
+                   
+                    # plt.scatter(output_voltage_list,input_voltage_list,label =f"iterative: {x}") 
+
+                    # slope, intercept = np.polyfit(output_voltage_list, input_voltage_list, 1)
+
+                    # # Generate the line using the slope and intercept
+                    # line = slope * np.array(output_voltage_list) + intercept
+
+                    # # Plot the linear fit line
+                    # plt.plot(output_voltage_list, line, label="Linear Fit", color="red")
+                    
+
+                  
+                    # x += 1
 
                     with open(file_name,'r+') as file:
                         # First we load existing data into a dict.
