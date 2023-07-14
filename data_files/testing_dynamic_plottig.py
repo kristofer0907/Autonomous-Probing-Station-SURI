@@ -451,8 +451,7 @@ class Run_everything():
             input_voltage_list = []
             output_voltage_list = []
 
-            all_input_voltage_lists.append(input_voltage_list)
-            all_output_voltage_lists.append(output_voltage_list)
+           
 
             with nidaqmx.Task() as output_task:
                 output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
@@ -492,38 +491,25 @@ class Run_everything():
                     input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
                     data[number_pair]={x:{"output": output_voltage_list, "input": input_voltage_list}}
 
-                   
+                    all_input_voltage_lists = all_input_voltage_lists+input_voltage_list
+                    all_output_voltage_lists= all_output_voltage_lists+output_voltage_list
+
+                    regression_coeffs = np.polyfit(all_output_voltage_lists,all_input_voltage_lists,1)
+                    regression_line = np.polyval(regression_coeffs,all_output_voltage_lists)
+                    
+                    plt.scatter(all_output_voltage_lists, all_input_voltage_lists,marker = "o",label = "Data") 
+                    plt.plot(all_output_voltage_lists,regression_line,color = "red",label = "Linear fit")
+                    plt.xlabel('Voltage')
+                    plt.ylabel('Current')
+                    plt.title(f'I-V for Pair number {number_pair}')
+                    plt.legend()
+                    plt.grid(True)
+                    plt.show()
 
 
-                    if x == 1:
-                        scatter = ax.scatter(output_voltage_list, input_voltage_list, label=f"Iteration {x+1}")
-                        plt.xlabel('Voltage')
-                        plt.ylabel('Current')
-                        plt.title(f'I-V for Pair number {number_pair}')
-                        plt.legend()
-                        plt.grid(True)
-                        plt.show()
-
-
-                    else:
-                        # Update the data of the scatter plot
-                        flattened_input_voltage = [voltage for sublist in all_input_voltage_lists[:x+1] for voltage in sublist]
-                        flattened_output_voltage = [voltage for sublist in all_output_voltage_lists[:x+1] for voltage in sublist]
-                        scatter.set_offsets(np.column_stack((flattened_output_voltage, flattened_input_voltage)))
-
-
-
-                         # Assign a unique color to each iteration
-                    color = plt.cm.viridis(x / ITERATIVES)
-                    scatter.set_facecolor(color)
-
+            
                     # Add a legend entry for the current iteration
-                    scatter.set_label(f"Iteration {x+1}")
 
-                    # Redraw the figure and pause
-                    fig.canvas.draw()
-                    fig.canvas.flush_events()
-                    time.sleep(0.1)
 
 
                     # Add a legend entry for the current iteration
