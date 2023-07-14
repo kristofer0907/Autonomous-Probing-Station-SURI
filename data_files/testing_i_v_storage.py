@@ -440,14 +440,20 @@ class Run_everything():
         number = 1
         number_pair = f"Pair number: {number}"
         file_name = file_path+file_name
+
         plt.ion()
 
         # Creating subplot and figure
         fig = plt.figure()
         ax = fig.add_subplot(111)
         scatter = None
+        input_voltage_list1 = []
+        input_voltage_list2 = []
+        input_voltage_list3 = []
+        input_voltage_list4 = []
         while x <= ITERATIVES:  
             input_voltage_list = []
+         
             output_voltage_list = []
             with nidaqmx.Task() as output_task:
                 output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
@@ -488,30 +494,50 @@ class Run_everything():
                     data[number_pair]={x:{"output": output_voltage_list, "input": input_voltage_list}}
                                     
                     if x == 1:
-                        # Create scatter plot for the first iteration
-                        scatter = ax.scatter(output_voltage_list, input_voltage_list, label=f"Iteration {x}")
-                        plt.xlabel('Voltage')
-                        plt.ylabel('Current')
-                        plt.title(f'I-V for Pair number {number_pair}')
-                        plt.legend()
-                        plt.grid(True)
-                        plt.show()
+                        input_voltage_list1 = input_voltage_list
 
-                    else:
-                        # Update the data of the scatter plot
-                        scatter.set_offsets(np.column_stack((output_voltage_list, input_voltage_list)))
+                        # Create scatter plot for the first iteration
+                        # scatter = ax.scatter(output_voltage_list, input_voltage_list, label=f"Iteration {x}")
+                        # plt.xlabel('Voltage')
+                        # plt.ylabel('Current')
+                        # plt.title(f'I-V for Pair number {number_pair}')
+                        # plt.legend()
+                        # plt.grid(True)
+                        # plt.show()
+
+                    elif x == 2:
+                        input_voltage_list2 = input_voltage_list
+
+                    elif x == 3:
+                        input_voltage_list3 = input_voltage_list
+
+                    elif x == 4:
+                        input_voltage_list4 =input_voltage_list
+
+                    elif x == 5:
+                        input_voltage_list5 = input_voltage_list
+      
+                    elif x == 6:
+                        input_voltage_list6 =input_voltage_list
+
+                    elif x == 7:
+                        input_voltage_list17 = input_voltage_list
+                    # else:
+                    #     # Update the data of the scatter plot
+                    #     scatter.set_offsets(np.column_stack((output_voltage_list, input_voltage_list)))
                         
 
-                    color = plt.cm.viridis(x / ITERATIVES)
-                    scatter.set_facecolor(color)
+                    # color = plt.cm.viridis(x / ITERATIVES)
+                    # scatter.set_facecolor(color)
 
-                    # Add a legend entry for the current iteration
-                    scatter.set_label(f"Iteration {x+1}")
+                    # # Add a legend entry for the current iteration
+                    # scatter.set_label(f"Iteration {x+1}")
 
-                    # Redraw the figure and pause
-                    fig.canvas.draw()
-                    fig.canvas.flush_events()
-                    time.sleep(0.1)
+                    # # Redraw the figure and pause
+                    # fig.canvas.draw()
+                    # fig.canvas.flush_events()
+                    # time.sleep(0.1)
+
                     x += 1
                     new_data = data
 
@@ -544,8 +570,45 @@ class Run_everything():
                         json.dump(file_data, file, indent = 4)
 
 
+        y = input_voltage_list1+ input_voltage_list2+ input_voltage_list3+ input_voltage_list4+ input_voltage_list5+ input_voltage_list6+ input_voltage_list17
+        x = output_voltage_list
+        plt.figure(figsize=(10, 6))
 
 
+        plt.scatter(x, input_voltage_list1, label='I1')
+        plt.scatter(x, input_voltage_list2, label='I2')
+        plt.scatter(x, input_voltage_list3, label='I3')
+        plt.scatter(x, input_voltage_list4, label='I4')
+        plt.scatter(x, input_voltage_list5, label='I5')
+        plt.scatter(x, input_voltage_list6, label='I6')
+        plt.scatter(x, input_voltage_list17, label='I7')
+
+        
+        #     # Combine data for linear regression
+        # y_combined = np.concatenate([input_voltage_list1, input_voltage_list2, input_voltage_list3,
+        #                       input_voltage_list4, input_voltage_list5, input_voltage_list6, input_voltage_list17])
+
+
+        #     # Perform linear regression
+        # x_combined = np.repeat(x, len(y_combined) // len(x))
+
+        # # Perform linear regression on combined data
+        # fit = np.polyfit(x_combined, y_combined, 1)
+
+        # # Create regression line
+        # regression_line = np.poly1d(fit)
+
+        # # Plot regression line
+        # plt.plot(x_combined, regression_line(x_combined), color='black', linewidth=1.5, linestyle='--')
+
+
+
+        plt.xlabel('Voltage')
+        plt.ylabel('Current')
+        plt.title('I-V characteristics for pair device 1')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
         number +=1 
             #res = dict(zip(output_voltage_list,input_voltage_list))
             # if number_pair not in data:
