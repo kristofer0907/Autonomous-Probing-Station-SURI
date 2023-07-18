@@ -1,15 +1,29 @@
 import serial
-COMPORT = "COM4"
-ser = serial.Serial(COMPORT,9600,timeout=1)
+import time
 
-def retrieveData():
-    ser.write(b"1")
-    data = ser.readline().decode("ascii")
-    return data
+COMPORT = "COM5"
+arduino = serial.Serial(port = COMPORT, timeout=0)
+time.sleep(2)
 
 while True:
-    uInput = input("Retrieve data: ")
-    if uInput == "1":
-        print(retrieveData())
-    else:
-        ser.write(b"0")
+
+    print ("Enter numbers broski")
+
+    var = str(input())
+    print ("You Entered :", var)
+
+    if(var == "1"):
+        arduino.write(str.encode("1"))
+        
+        time.sleep(1)
+
+    elif(var == "2"):
+        arduino.write(str.encode("2"))
+        time.sleep(1)
+    elif(var == "3"):
+        arduino.write(str.encode("3"))
+        time.sleep(1)
+    while arduino.in_waiting:
+        data = arduino.readline().decode().strip()
+        if data:
+            print("Arduino says:", data)
