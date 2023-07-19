@@ -451,7 +451,7 @@ class Run_everything():
         voltage_max = VOLTAGE_MAX
         voltage_step = STEPS
         
-        data = dict()
+        
         #data[variable] = {}
         
         
@@ -459,6 +459,7 @@ class Run_everything():
         arduino = serial.Serial(port = COMPORT, timeout=0)
         start_time = time.time()
         for i in range(1,number_pairs+1):
+            data = dict()
             number_pair = f"Pair number: {i}"
 
             fig = plt.figure()
@@ -566,11 +567,11 @@ class Run_everything():
 
 
 
-            arduino.write(str.encode("5"))
-            time.sleep(1)
-            arduino.write(str.encode("1"))
-            time.sleep(1)
-            arduino.write(str.encode("4")) 
+            # arduino.write(str.encode("5"))
+            # time.sleep(1)
+            # arduino.write(str.encode("1"))
+            # time.sleep(1)
+            # arduino.write(str.encode("4")) 
             #res = dict(zip(output_voltage_list,input_voltage_list))
             # if number_pair not in data:
             #     data[number_pair] = {}
