@@ -328,6 +328,13 @@ class UI:
         ITERATIVES = int(input("Iteratives: "))
         GAIN = float(input("Gain: "))
         number_pairs = int(input("How many pairs of devices are on the micro-chip: "))
+        while True:
+                comport = input("Type the comport of the arduino serial: ")
+                try: 
+                    serial.Serial(port = comport, timeout=0)
+                    break
+                except:
+                    print("Wrong Comport, try again")
         print("Would you like to continue(yes/no)?")
         selection = input("Input: ")
         if selection == "yes":
@@ -338,7 +345,7 @@ class UI:
         else:
             print("Please enter either yes or no")
 
-        return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs
+        return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs,comport
 
     
     def get_info_i_t(self):
@@ -414,13 +421,13 @@ class Run_everything():
 
 
         if boolean == False:
-            global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES,GAIN,number_pairs
-            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs= self.user_interface.get_info_for_DAQ()
+            global analog_input_channel, analog_output_channel, SAMPLE_AMOUNT, SAMPLE_RATE, file_name, file_path, VOLTAGE_MIN, VOLTAGE_MAX, STEPS, ITERATIVES,GAIN,number_pairs,COMPORT
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs,COMPORT= self.user_interface.get_info_for_DAQ()
 
         elif boolean == True:
             pass
         else:
-            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs= self.user_interface.get_info_for_DAQ()
+            analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs,COMPORT= self.user_interface.get_info_for_DAQ()
   
 
         main = DAQ()
@@ -435,7 +442,7 @@ class Run_everything():
             else:
                 main.get_user_parameters(SAMPLE_AMOUNT,SAMPLE_RATE,new_name_file,file_path)
 
-        start_time = time.time()
+
         main.count_zeros_in_float(VOLTAGE_MIN)
         voltage_levels = main.create_interval(VOLTAGE_MIN,VOLTAGE_MAX,STEPS) # TODO: Make interval muteable for user
         main.setup(voltage_levels,STEPS,variable,ITERATIVES)
@@ -447,124 +454,130 @@ class Run_everything():
         data = dict()
         #data[variable] = {}
         
-        number = 1
-        number_pair = f"Pair number: {number}"
+        
         file_name = file_path+file_name
-        
-        
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        scatter = None
-        all_input_voltage_lists = []
-        all_output_voltage_lists = []
-        for x in range(1,ITERATIVES+1):
-            input_voltage_list = []
-            output_voltage_list = []
+        arduino = serial.Serial(port = COMPORT, timeout=0)
+        start_time = time.time()
+        for i in range(1,number_pairs+1):
+            number_pair = f"Pair number: {i}"
 
-           
-
-            with nidaqmx.Task() as output_task:
-                output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
-
-                # Create a task for analog input
-                with nidaqmx.Task() as input_task:
-                    input_task.ai_channels.add_ai_voltage_chan("cDAQ1Mod2/ai0")
-
-                    # Set initial output voltage to 0V
-                    output_task.write(0)
-
-                    # Increase voltage to max
-                    for voltage in range(0, int(voltage_max * 100) + 1, int(voltage_step * 100)):
-                        voltage /= 100.0
-                        output_task.write(voltage)
-                        input_voltage = input_task.read()
-                        input_voltage_list.append(input_voltage)
-                        output_voltage_list.append(voltage)
-                        #main.storing(voltage,input_voltage,x,variable)
-
-                    # Decrease voltage to min
-                    for voltage in range(int(voltage_max * 100), int(voltage_min * 100) - 1, -int(voltage_step * 100)):
-                        voltage /= 100.0
-                        output_task.write(voltage)
-                        input_voltage = input_task.read()
-                        input_voltage_list.append(input_voltage)
-                        output_voltage_list.append(voltage)
-                        #main.storing(voltage,input_voltage,x,variable)
-                    # Traverse back up to 0V
-                    for voltage in range(int(voltage_min * 100), int(voltage_step), int(voltage_step * 100)):
-                        voltage /= 100.0
-                        output_task.write(voltage)
-                        input_voltage = input_task.read()
-                        input_voltage_list.append(input_voltage)
-                        output_voltage_list.append(voltage)
-                        #main.storing(voltage,input_voltage,x,variable)
-                    input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
-                    data[number_pair]={x:{"output": output_voltage_list, "input": input_voltage_list}}
-
-                    all_input_voltage_lists = all_input_voltage_lists+input_voltage_list
-                    all_output_voltage_lists= all_output_voltage_lists+output_voltage_list
-
-                    regression_coeffs = np.polyfit(all_output_voltage_lists,all_input_voltage_lists,1)
-                    regression_line = np.polyval(regression_coeffs,all_output_voltage_lists)
-                    
-                    plt.scatter(all_output_voltage_lists, all_input_voltage_lists,marker = "o",label = "Data") 
-                    plt.plot(all_output_voltage_lists,regression_line,color = "red",label = "Linear fit")
-                    plt.xlabel('Voltage')
-                    plt.ylabel('Current')
-                    plt.title(f'I-V for Pair number {number_pair}')
-                    plt.legend()
-                    plt.grid(True)
-                    plt.show()
-
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            scatter = None
+            all_input_voltage_lists = []
+            all_output_voltage_lists = []
+            for x in range(1,ITERATIVES+1):
+                input_voltage_list = []
+                output_voltage_list = []
 
             
-                    # Add a legend entry for the current iteration
+
+                with nidaqmx.Task() as output_task:
+                    output_task.ao_channels.add_ao_voltage_chan("cDAQ1Mod1/ao0", min_val=voltage_min, max_val=voltage_max)
+
+                    # Create a task for analog input
+                    with nidaqmx.Task() as input_task:
+                        input_task.ai_channels.add_ai_voltage_chan("cDAQ1Mod2/ai0")
+
+                        # Set initial output voltage to 0V
+                        output_task.write(0)
+
+                        # Increase voltage to max
+                        for voltage in range(0, int(voltage_max * 100) + 1, int(voltage_step * 100)):
+                            voltage /= 100.0
+                            output_task.write(voltage)
+                            input_voltage = input_task.read()
+                            input_voltage_list.append(input_voltage)
+                            output_voltage_list.append(voltage)
+                            #main.storing(voltage,input_voltage,x,variable)
+
+                        # Decrease voltage to min
+                        for voltage in range(int(voltage_max * 100), int(voltage_min * 100) - 1, -int(voltage_step * 100)):
+                            voltage /= 100.0
+                            output_task.write(voltage)
+                            input_voltage = input_task.read()
+                            input_voltage_list.append(input_voltage)
+                            output_voltage_list.append(voltage)
+                            #main.storing(voltage,input_voltage,x,variable)
+                        # Traverse back up to 0V
+                        for voltage in range(int(voltage_min * 100), int(voltage_step), int(voltage_step * 100)):
+                            voltage /= 100.0
+                            output_task.write(voltage)
+                            input_voltage = input_task.read()
+                            input_voltage_list.append(input_voltage)
+                            output_voltage_list.append(voltage)
+                            #main.storing(voltage,input_voltage,x,variable)
+                        input_voltage_list = [GAIN * voltage for voltage in input_voltage_list]
+                        data[number_pair]={x:{"output": output_voltage_list, "input": input_voltage_list}}
+
+                        all_input_voltage_lists = all_input_voltage_lists+input_voltage_list
+                        all_output_voltage_lists= all_output_voltage_lists+output_voltage_list
+
+                        regression_coeffs = np.polyfit(all_output_voltage_lists,all_input_voltage_lists,1)
+                        regression_line = np.polyval(regression_coeffs,all_output_voltage_lists)
+                        
+                        plt.scatter(all_output_voltage_lists, all_input_voltage_lists,marker = "o",label = "Data") 
+                        plt.plot(all_output_voltage_lists,regression_line,color = "red",label = "Linear fit")
+                        plt.xlabel('Voltage')
+                        plt.ylabel('Current')
+                        plt.title(f'I-V for Pair number {number_pair}')
+                        plt.legend()
+                        plt.grid(True)
+                        plt.show()
+
+
+                
+                        # Add a legend entry for the current iteration
 
 
 
-                    # Add a legend entry for the current iteration
+                        # Add a legend entry for the current iteration
+                        
+                        new_data = data
+
+
                     
-                    new_data = data
-
-
-                   
-                   
-                    # plt.scatter(output_voltage_list,input_voltage_list,label =f"iterative: {x}") 
-
-                    # slope, intercept = np.polyfit(output_voltage_list, input_voltage_list, 1)
-
-                    # # Generate the line using the slope and intercept
-                    # line = slope * np.array(output_voltage_list) + intercept
-
-                    # # Plot the linear fit line
-                    # plt.plot(output_voltage_list, line, label="Linear Fit", color="red")
                     
+                        # plt.scatter(output_voltage_list,input_voltage_list,label =f"iterative: {x}") 
 
-                  
-                    # x += 1
+                        # slope, intercept = np.polyfit(output_voltage_list, input_voltage_list, 1)
 
-                    with open(file_name,'r+') as file:
-                        # First we load existing data into a dict.
-                        file_data = json.load(file)
+                        # # Generate the line using the slope and intercept
+                        # line = slope * np.array(output_voltage_list) + intercept
 
-                        # Join new_data with file_data inside emp_details
-                        file_data[variable].append(new_data)
-                        # Sets file's current position at offset.
-                        file.seek(0)
-                        # convert back to json.
-                        json.dump(file_data, file, indent = 4)
+                        # # Plot the linear fit line
+                        # plt.plot(output_voltage_list, line, label="Linear Fit", color="red")
+                        
+
+                    
+                        # x += 1
+
+                        with open(file_name,'r+') as file:
+                            # First we load existing data into a dict.
+                            file_data = json.load(file)
+
+                            # Join new_data with file_data inside emp_details
+                            file_data[variable].append(new_data)
+                            # Sets file's current position at offset.
+                            file.seek(0)
+                            # convert back to json.
+                            json.dump(file_data, file, indent = 4)
 
 
 
 
-        number +=1 
+            arduino.write(str.encode("5"))
+            time.sleep(1)
+            arduino.write(str.encode("1"))
+            time.sleep(1)
+            arduino.write(str.encode("4")) 
             #res = dict(zip(output_voltage_list,input_voltage_list))
             # if number_pair not in data:
             #     data[number_pair] = {}
             # else:
             #     data[number_pair][x] = res
                     
-
+        
         end_time = time.time()-start_time
         print("")
         print(f"Time it took to collect data: {end_time}")
