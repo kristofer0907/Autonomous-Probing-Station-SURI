@@ -23,7 +23,12 @@ while True:
     elif(var == "3"):
         arduino.write(str.encode("3"))
         time.sleep(1)
+    elif(var == "S"):
+        arduino.write(str.encode("S"))
+        time.sleep(1)
     while arduino.in_waiting:
         data = arduino.readline().decode().strip()
         if data:
             print("Arduino says:", data)
+
+    arduino.flushInput()

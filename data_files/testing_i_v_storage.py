@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import math
 import json
 import os
+import serial
+
+
 
 class DAQ:
     def get_user_parameters(self,sample_amount,sample_rate,file_name,file_path):
@@ -251,11 +254,13 @@ print('WELCOME TO THE AUTO-PROBER2023, please select one of the following option
 
 class UI:
     
+
+
     def start(self):
                 
         print(" 1. I-V characteristics")
         print(" 2. I-t characteristics")
-        print(" 3. Calibration")
+        print(" 3. Calibration for height placement")
         users_choice = input("Input: ")
         if users_choice == "1":
             Run_everything().anything(False)
@@ -263,7 +268,16 @@ class UI:
             Run_everything().something()
             
         elif users_choice == "3":
-            pass
+            while True:
+                comport = input("Type the comport of the arduino serial: ")
+                try: 
+                    serial.Serial(port = comport, timeout=0)
+                    break
+                except:
+                    print("Wrong, try again")
+             
+
+            Run_everything().mover(comport)
         else:
             print("Please select an available option")
             time.sleep(1)
@@ -671,7 +685,46 @@ class Run_everything():
 
         # Plot the current measurements over time
        
+    def mover(self,COMPORT):
+                
         
+        arduino = serial.Serial(port = COMPORT, timeout=0)
+        time.sleep(2)
+        state = True
+        while state == True:
+
+            print ("Enter 1 to adjust rotational stage")
+            print ("Enter 2 to move the PCB downwards")
+            print ("Enter 3 to move the PCB upwards")
+            print("NOTICE: Once you select an option the motor will start to configure, press S and enter in order to stop")
+
+            var = str(input("Input: "))
+            print ("You Entered :", var)
+
+            if(var == "1"):
+                arduino.write(str.encode("1"))
+                
+                time.sleep(1)
+
+            elif(var == "2"):
+                arduino.write(str.encode("2"))
+                time.sleep(1)
+            elif(var == "3"):
+                arduino.write(str.encode("3"))
+                time.sleep(1)
+            elif(var == "S"):
+                arduino.write(str.encode("S"))
+                time.sleep(1)
+                state = False
+            # while arduino.in_waiting:
+            #     data = arduino.readline().decode().strip()
+            #     if data:
+            #         print("Arduino says:", data)
+
+            arduino.flushInput()
+        arduino.close()    
+        self.user_interface.ending()
+
 
 boolean = False
 UI().start()
