@@ -660,7 +660,7 @@ class Run_everything():
 
 
             arduino.write(str.encode("5"))
-            time.sleep(0.3)
+            time.sleep(1)
             arduino.write(str.encode("1"))
             time.sleep(0.5)
             arduino.write(str.encode("4")) 
@@ -686,7 +686,7 @@ class Run_everything():
 
     def something(self,boolean): #Collects I-t
 
-
+        
         
         if boolean == False:
             global desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices,COMPORT
@@ -697,9 +697,20 @@ class Run_everything():
         else:
             desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices,COMPORT=  self.user_interface.get_info_i_t()
   
-        boolean = False
+        logical_check = DAQ().search_file(file_path,file_name)
+        if logical_check == None: #Means it doesnt exist already
+            pass
+        elif logical_check != None: ### Means the file exists already
+            new_name_file= self.user_interface.file_exists()
+            if new_name_file == None: #They want to override the file
+                pass
+            else: #They dont want to override the file
+                file_name = new_name_file
+
+
+        factos = False
         main = DAQ()
-        main.write_json({},file_name,boolean)
+        main.write_json({},file_name,factos)
 
 
         arduino = serial.Serial(port = COMPORT, timeout=0)
@@ -735,10 +746,10 @@ class Run_everything():
             plt.grid(True)
             plt.show()
             arduino.write(str.encode("5"))
-            time.sleep(0.3)
-            arduino.write(str.encode("1"))
             time.sleep(1)
-            arduino.write(str.encode("4")) 
+            arduino.write(str.encode("1"))
+            time.sleep(0.5)
+            arduino.write(str.encode("4"))
         arduino.close()
         self.user_interface.ending("I-t")
 
