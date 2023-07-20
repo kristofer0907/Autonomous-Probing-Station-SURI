@@ -2,7 +2,7 @@
 #define stepPin 4
 #define dirPin2 13
 #define stepPin2 12
-#define stepsPerRevolution 400
+#define stepsPerRevolution 200
 
 char data = '0'; // Initialize data to '0'
 

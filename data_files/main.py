@@ -6,8 +6,16 @@ import math
 import json
 import os
 import serial
+from tabulate import tabulate
 
 class DAQ:
+
+    def get_pair_data(self,data_list, pair_number):
+        for item in data_list:
+            if f"Pair number: {pair_number}" in item:
+                return item[f"Pair number: {pair_number}"]
+
+        return None
     def get_user_parameters(self,sample_amount,sample_rate,file_name,file_path):
         self.sample_amount = sample_amount
         self.sample_rate = sample_rate
@@ -257,11 +265,12 @@ class UI:
         print(" 1. I-V characteristics")
         print(" 2. I-t characteristics")
         print(" 3. Calibration")
+        print(" 4. Retrieve data")
         users_choice = input("Input: ")
         if users_choice == "1":
             Run_everything().anything(False)
         elif users_choice == "2":
-            Run_everything().something()
+            Run_everything().something(False)
             
         elif users_choice == "3":
             while True:
@@ -274,6 +283,8 @@ class UI:
              
 
             Run_everything().mover(comport)
+        elif users_choice == "4":
+            Run_everything().retriever()
         else:
             print("Please select an available option")
             time.sleep(1)
@@ -347,6 +358,29 @@ class UI:
 
         return analog_input_channel,analog_output_channel,SAMPLE_AMOUNT,SAMPLE_RATE,file_name,file_path,VOLTAGE_MIN,VOLTAGE_MAX,STEPS,ITERATIVES,GAIN,number_pairs,comport
 
+
+    def get_info_for_retrieval(self):
+        while True:
+            file_name = input("Please give a folder name: ")
+            formatted_file_name = file_name+".json"
+            folder_path = r"c:\Users\kdkristj\Desktop\GitHub\auto-prober-2023\data_files\\"
+            find_file = DAQ().search_file(folder_path,formatted_file_name)
+            if find_file != None: # File does exist
+                print("File found")
+                time.sleep(2)
+                break
+            elif find_file == None: # File doesnt exist
+        
+                print("File not found")
+                time.sleep(2)
+        while True:
+            try: 
+                pairs = int(input(("For what pair of devices would you like to see: ")))
+                break
+            except:
+                print("Please input an integer for the pair of devices")
+        return formatted_file_name,pairs
+
     
     def get_info_i_t(self):
         while True:
@@ -373,6 +407,7 @@ class UI:
         desired_time = float(input("Enter the desired measurement time in seconds: "))
         num_samples = int(input("Enter the number of samples to acquire: "))
         GAIN = float(input("Gain: "))
+        comport = str(input("Comport for arduino: "))
         print("Would you like to continue(yes/no)?")
         selection = input("Input: ")
         if selection == "yes":
@@ -382,28 +417,85 @@ class UI:
             #self.get_info_for_DAQ()
         else:
             print("Please enter either yes or no")
-        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel,analog_output_channel,GAIN,pairs_of_devices
-    def ending(self):
-        print("Data has been sucessfully collected, select one of the following options: ")
-        print(" 1. Run again with same constraints and conditions")
-        print(" 2. Run with different constraints and conditions")
-        print(" 3. Return to main menu")
-        print(" 4. Quit program")
-        users_end = input(" Input: ")
-        if users_end == "1":
-            boolean = True
-            Run_everything().anything(boolean)
-        elif users_end == "2":
-            boolean = None
-            Run_everything().anything(boolean)
-        elif users_end == "3":
-            self.start()
-        elif users_end == "4":
-            pass
-        else:
-            print("Please select an available option")
-            time.sleep(1)
-            self.ending()
+        return desired_voltage,desired_time,num_samples,file_name,file_path,analog_input_channel,analog_output_channel,GAIN,pairs_of_devices,comport
+    def ending(self,state):
+        state = str(state)
+        
+        
+        if state == "I-V":
+            print("Data has been sucessfully collected, select one of the following options: ")
+            print()
+            print(" 1. Run again with same constraints and conditions")
+            print(" 2. Run with different constraints and conditions")
+            print(" 3. Return to main menu")
+            print(" 4. Quit program")
+            users_end = input(" Input: ")
+                
+            if users_end == "1":
+                boolean = True
+                Run_everything().anything(boolean)
+            elif users_end == "2":
+                boolean = None
+                Run_everything().anything(boolean)
+            elif users_end == "3":
+                self.start()
+            elif users_end == "4":
+                pass
+            else:
+                print("Please select an available option")
+                time.sleep(1)
+                self.ending("I-V")
+        elif state == "I-t":
+            print("Data has been sucessfully collected, select one of the following options: ")
+            print()
+            print(" 1. Run again with same constraints and conditions")
+            print(" 2. Run with different constraints and conditions")
+            print(" 3. Return to main menu")
+            print(" 4. Quit program")
+            users_end = input(" Input: ")
+            if users_end == "1":
+                boolean = True
+                Run_everything().something(boolean)
+            elif users_end == "2":
+                boolean = None
+                Run_everything().something(boolean)
+            elif users_end == "3":
+                self.start()
+            elif users_end == "4":
+                pass
+            else:
+                print("Please select an available option")
+                time.sleep(1)
+                self.ending("I-t")
+        elif state == "Calibration":
+            print("Calibration successful, select one of the following options: ")
+            print()
+            print(" 1. Return to main menu")
+            print(" 2. Quit program")
+            users_end = input(" Input: ")
+            if users_end == "1":
+                self.start()
+            elif users_end == "2":
+                pass
+            else:
+                print("Please select an available option")
+                time.sleep(1)
+                self.ending("Calibration")
+           
+        elif state == "Retrieval":
+            print("Data retrieval successful, select one of the following options: ")
+            print()
+            print(" 1. Return to main menu")
+            print(" 2. Quit program")
+            users_end = input(" Input: ")
+            if users_end == "1":
+                self.start()
+            elif users_end == "2":
+                pass
+            else:
+                print("Please select an available option")
+                time.sleep(1)
+                self.ending("Retrieval")
 
 
 ############## CALLING MAIN ############## 
@@ -567,18 +659,19 @@ class Run_everything():
 
 
 
-            # arduino.write(str.encode("5"))
-            # time.sleep(1)
-            # arduino.write(str.encode("1"))
-            # time.sleep(1)
-            # arduino.write(str.encode("4")) 
+            arduino.write(str.encode("5"))
+            time.sleep(0.3)
+            arduino.write(str.encode("1"))
+            time.sleep(0.5)
+            arduino.write(str.encode("4")) 
+
             #res = dict(zip(output_voltage_list,input_voltage_list))
             # if number_pair not in data:
             #     data[number_pair] = {}
             # else:
             #     data[number_pair][x] = res
                     
-        
+        arduino.close()
         end_time = time.time()-start_time
         print("")
         print(f"Time it took to collect data: {end_time}")
@@ -588,17 +681,29 @@ class Run_everything():
 
             
             #main.plotter(ITERATIVES,voltage_levels)
-        self.user_interface.ending()
+        self.user_interface.ending("I-V")
         
 
-    def something(self):
-        desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices=  self.user_interface.get_info_i_t()
+    def something(self,boolean): #Collects I-t
+
+
+        
+        if boolean == False:
+            global desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices,COMPORT
+            desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices,COMPORT=  self.user_interface.get_info_i_t()
+
+        elif boolean == True:
+            pass
+        else:
+            desired_voltage,desired_time,num_samples,file_name,file_path,analog_input,analog_output,GAIN,pairs_devices,COMPORT=  self.user_interface.get_info_i_t()
+  
         boolean = False
         main = DAQ()
         main.write_json({},file_name,boolean)
 
 
-        
+        arduino = serial.Serial(port = COMPORT, timeout=0)
+
         for number in range(1, pairs_devices+1):
             data = {}
 
@@ -617,23 +722,28 @@ class Run_everything():
 
             current_data = [GAIN * voltage for voltage in voltage_data]
 
-            time = np.linspace(0, (num_samples - 1) / sample_rate, num_samples)
+            time1 = np.linspace(0, (num_samples - 1) / sample_rate, num_samples)
             number_pair = f"Pair number: {number}"
-            res = dict(zip(np.round(time, 1), current_data))
+            res = dict(zip(np.round(time1, 1), current_data))
             data[number_pair] = res
             main.write_json(data,file_name,boolean=True)
 
-            plt.plot(time, current_data)
+            plt.plot(time1, current_data)
             plt.xlabel('Time (s)')
             plt.ylabel('Current (A)')
-            plt.title(f'Current vs. Time pair number {pairs_devices}')
+            plt.title(f'Current vs. Time pair number {number}')
             plt.grid(True)
             plt.show()
-        self.user_interface.ending()
+            arduino.write(str.encode("5"))
+            time.sleep(0.3)
+            arduino.write(str.encode("1"))
+            time.sleep(1)
+            arduino.write(str.encode("4")) 
+        arduino.close()
+        self.user_interface.ending("I-t")
 
-        # Plot the current measurements over time
        
-    def mover(self,COMPORT):
+    def mover(self,COMPORT): #Lets the user move the stage
                 
         
         arduino = serial.Serial(port = COMPORT, timeout=0)
@@ -671,8 +781,46 @@ class Run_everything():
 
             arduino.flushInput()
         arduino.close()    
-        self.user_interface.ending()
+        self.user_interface.ending("Calibration")
     
+
+    def retriever(self): # In charge of retrieving data collected
+
+      
+        variable = "I-V data"
+        
+
+        actual_file,pair = UI().get_info_for_retrieval()
+
+
+        # Load data from the JSON file
+        with open(actual_file, 'r+') as file:
+            file_data = json.load(file)
+
+
+        # Get data for the specified pair number
+        data = DAQ().get_pair_data(file_data[variable], pair)
+
+        table_data = []
+        for idx, val in enumerate(data['1']['input']):
+            table_data.append([val, data['1']['output'][idx]])
+
+        input_data = data['1']['input']
+        output_data = data['1']['output']
+        headers = ['Input', 'Output']
+        print(tabulate(table_data, headers=headers))
+
+        plt.scatter(output_data, input_data,marker = "o",label = "Data") 
+        plt.xlabel('Voltage')
+        plt.ylabel('Current')
+        plt.title(f'I-V for Pair number {2}')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+        
+        self.user_interface.ending("Retrieval")
+
+
 
 boolean = False
 UI().start()
